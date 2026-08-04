@@ -21,29 +21,43 @@ public class OpenAiAnalysisService : IGermanAnalysisService
     
     public async Task<AnalyzedSentence> AnalyzeAsync(string germanText, TargetLanguage targetlanguage, CancellationToken ct = default)
     {
-        string systemPrompt = """
-                              너는 독일어 문법 선생님이야. 주어진 독일어 문장을 분석해줘.
-                              - 동사는 원형, 과거형, 과거분사형을 알려주고, 규칙/불규칙 여부도 설명해.
-                              - 분리동사면 왜 분리됐는지 설명해.
-                              - 명사는 관사가 왜 그런지 설명해.
-                              - 형용사는 어미 변화 이유를 설명해.
-                              - 자연스러운 번역이랑 직역(직독직해) 둘 다 알려줘.
+        string languageInstruction;
 
-                              반드시 아래 JSON 형식으로만 답해, 다른 텍스트는 절대 추가하지 마:
-                              {
-                                "Translation": "자연스러운 번역",
-                                "LiteralTranslation": "직역",
-                                "WordAnalyses": [
-                                  {
-                                    "Word": "단어",
-                                    "Gender": "성별/관사 설명",
-                                    "OriginalWord": "동사 원형",
-                                    "PastParticiple": "과거분사형",
-                                    "GrammarExplanation": "문법 설명"
-                                  }
-                                ]
-                              }
-                              """;
+        if (targetlanguage == TargetLanguage.Korean)
+        {
+            languageInstruction = "Translate Korean.";
+        }
+        else
+        {
+            languageInstruction = "Translate English.";
+        }
+        
+        string systemPrompt = $$"""
+                                너는 독일어 문법 선생님이야. 주어진 독일어 문장을 분석해줘.
+                                - 동사는 원형, 과거형, 과거분사형을 알려주고, 규칙/불규칙 여부도 설명해.
+                                - 분리동사면 왜 분리됐는지 설명해.
+                                - 명사는 관사가 왜 그런지 설명해.
+                                - 형용사는 어미 변화 이유를 설명해.
+                                - 자연스러운 번역이랑 직역(직독직해) 둘 다 알려줘.
+
+                                {{languageInstruction}}
+
+
+                                반드시 아래 JSON 형식으로만 답해, 다른 텍스트는 절대 추가하지 마:
+                                {
+                                  "Translation": "자연스러운 번역",
+                                  "LiteralTranslation": "직역",
+                                  "WordAnalyses": [
+                                    {
+                                      "Word": "단어",
+                                      "Gender": "성별/관사 설명",
+                                      "OriginalWord": "동사 원형",
+                                      "PastParticiple": "과거분사형",
+                                      "GrammarExplanation": "문법 설명"
+                                    }
+                                  ]
+                                }
+                                """;
         
         var requestBody = new
         {
@@ -71,9 +85,9 @@ public class OpenAiAnalysisService : IGermanAnalysisService
             .GetProperty("content")
             .GetString();
         
+        
         var result = JsonSerializer.Deserialize<AnalyzedSentence>(content);
         return result;
         
     }
 }
-
