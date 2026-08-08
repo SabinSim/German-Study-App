@@ -10,4 +10,8 @@
       <ProjectReference Include="..\GermanStudyApp.Core\GermanStudyApp.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.29" />
+    </ItemGroup>
+
 </Project>
