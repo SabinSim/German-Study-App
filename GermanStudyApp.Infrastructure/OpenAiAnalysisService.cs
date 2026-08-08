@@ -21,44 +21,68 @@ public class OpenAiAnalysisService : IGermanAnalysisService
     
     public async Task<AnalyzedSentence> AnalyzeAsync(string germanText, TargetLanguage targetlanguage, CancellationToken ct = default)
     {
-        string languageInstruction;
+        var languageName = targetlanguage == TargetLanguage.Korean ? "Korean" : "English";
 
-        if (targetlanguage == TargetLanguage.Korean)
+        // 영어 결과에 한글이 섞여 나오는 경우를 줄이기 위해, 1회 재시도(더 강한 지시)를 허용한다.
+        for (var attempt = 0; attempt < 2; attempt++)
         {
-            languageInstruction = "Translate Korean.";
+            var strictLanguageRule = attempt == 0
+                ? $"All text fields in the JSON must be written in {languageName}."
+                : $"CRITICAL: Every text field in the JSON must be written in {languageName} only. Do not use any other language.";
+
+            var systemPrompt = $$"""
+                                 you are a German grammar teacher. Please analyze the given German sentence.
+                                 - Please provide the infinitive, past tense, and past participle forms of the verbs, and explain whether they are regular or irregular.
+                                 - If the verb is separable, explain why it is separated.
+                                 - For nouns, explain why the article is as it is.
+                                 - For adjectives, explain the reason for the ending changes.
+                                 - Provide both a natural translation and a literal translation.
+                                 - For each word, provide its meaning/translation.
+
+                                 {{strictLanguageRule}}
+
+                                 you must respond only in the following JSON format, and do not add any other text:
+                                 {
+                                   "Translation": "<natural translation>",
+                                   "LiteralTranslation": "<literal, word-by-word translation>",
+                                   "WordAnalyses": [
+                                   {
+                                     "Word": "<word>",
+                                     "Meaning": "<meaning/translation of this word>",
+                                     "Gender": "<gender/article explanation>",
+                                     "OriginalWord": "<infinitive form of the verb>",
+                                     "PastParticiple": "<past participle form>",
+                                     "GrammarExplanation": "<grammar explanation>"
+                                     }
+                                   ]
+                                 }
+                                 """;
+
+            var content = await RequestCompletionContentAsync(systemPrompt, germanText, ct);
+
+            var result = JsonSerializer.Deserialize<AnalyzedSentence>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+            });
+
+            if (result is null)
+            {
+                throw new InvalidOperationException("AI response could not be parsed into AnalyzedSentence.");
+            }
+
+            if (targetlanguage == TargetLanguage.English && attempt == 0 && ContainsHangulInResult(result))
+            {
+                continue;
+            }
+
+            return result;
         }
-        else
-        {
-            languageInstruction = "Translate English.";
-        }
-        
-        string systemPrompt = $$"""
-                                너는 독일어 문법 선생님이야. 주어진 독일어 문장을 분석해줘.
-                                - 동사는 원형, 과거형, 과거분사형을 알려주고, 규칙/불규칙 여부도 설명해.
-                                - 분리동사면 왜 분리됐는지 설명해.
-                                - 명사는 관사가 왜 그런지 설명해.
-                                - 형용사는 어미 변화 이유를 설명해.
-                                - 자연스러운 번역이랑 직역(직독직해) 둘 다 알려줘.
 
-                                {{languageInstruction}}
+        throw new InvalidOperationException("AI response did not satisfy the requested output language.");
+    }
 
-
-                                반드시 아래 JSON 형식으로만 답해, 다른 텍스트는 절대 추가하지 마:
-                                {
-                                  "Translation": "자연스러운 번역",
-                                  "LiteralTranslation": "직역",
-                                  "WordAnalyses": [
-                                    {
-                                      "Word": "단어",
-                                      "Gender": "성별/관사 설명",
-                                      "OriginalWord": "동사 원형",
-                                      "PastParticiple": "과거분사형",
-                                      "GrammarExplanation": "문법 설명"
-                                    }
-                                  ]
-                                }
-                                """;
-        
+    private async Task<string> RequestCompletionContentAsync(string systemPrompt, string germanText, CancellationToken ct)
+    {
         var requestBody = new
         {
             model = "gpt-4o-mini",
@@ -66,28 +90,66 @@ public class OpenAiAnalysisService : IGermanAnalysisService
             messages = new object[]
             {
                 new { role = "system", content = systemPrompt },
-                new { role = "user", content = germanText }
-            }
+                new { role = "user", content = germanText },
+            },
         };
-        
+
         var response = await _httpClient.PostAsJsonAsync(
-            "https://api.openai.com/v1/chat/completions", 
+            "https://api.openai.com/v1/chat/completions",
             requestBody,
             ct);
 
         response.EnsureSuccessStatusCode();
-        
+
         var openAiResponse = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
-        
+
         var content = openAiResponse
             .GetProperty("choices")[0]
             .GetProperty("message")
             .GetProperty("content")
             .GetString();
-        
-        
-        var result = JsonSerializer.Deserialize<AnalyzedSentence>(content);
-        return result;
-        
+
+        return content ?? throw new InvalidOperationException("AI response content was empty.");
+    }
+
+    private static bool ContainsHangulInResult(AnalyzedSentence result)
+    {
+        if (ContainsHangul(result.Translation) || ContainsHangul(result.LiteralTranslation))
+        {
+            return true;
+        }
+
+        foreach (var item in result.WordAnalyses)
+        {
+            if (ContainsHangul(item.Word) ||
+                ContainsHangul(item.Meaning) ||
+                ContainsHangul(item.Gender) ||
+                ContainsHangul(item.OriginalWord) ||
+                ContainsHangul(item.PastParticiple) ||
+                ContainsHangul(item.GrammarExplanation))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsHangul(string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return false;
+        }
+
+        foreach (var ch in text)
+        {
+            if (ch >= '\uAC00' && ch <= '\uD7AF')
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
