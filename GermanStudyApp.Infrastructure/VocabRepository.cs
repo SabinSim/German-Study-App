@@ -21,4 +21,12 @@ public class VocabRepository : IVocabRepository
         db.Database.EnsureCreated();
         return await db.VocabEntries.ToListAsync(ct);
     }
+
+    public async Task UpdateAsync(VocabEntry entry, CancellationToken ct = default)
+    {
+        using var db = new AppDbContext();
+        db.Database.EnsureCreated();
+        db.VocabEntries.Update(entry);
+        await db.SaveChangesAsync(ct);
+    }
 }
