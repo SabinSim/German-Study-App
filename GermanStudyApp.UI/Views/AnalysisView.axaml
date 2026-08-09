@@ -1,0 +1,86 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GermanStudyApp.UI.ViewModels"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="GermanStudyApp.UI.Views.AnalysisView"
+             x:DataType="vm:AnalysisViewModel">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,*">
+
+        <!-- Input area -->
+        <StackPanel Grid.Row="0" Spacing="8">
+            <TextBlock Text="German Sentence" FontWeight="Bold" />
+            <TextBox Text="{Binding GermanText}"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     Height="70"
+                     Watermark="e.g. Ich gehe heute in die Schule." />
+        </StackPanel>
+
+        <!-- Options + run button -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="16" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="Target Language" VerticalAlignment="Center" />
+                <ComboBox ItemsSource="{Binding TargetLanguages}"
+                          SelectedItem="{Binding SelectedTargetLanguage}"
+                          Width="120" />
+            </StackPanel>
+
+            <CheckBox Content="Show literal translation" IsChecked="{Binding ShowLiteralTranslation}" />
+
+            <Button Content="Analyze"
+                    Command="{Binding AnalyzeCommand}"
+                    IsEnabled="{Binding !IsBusy}" />
+
+            <TextBlock Text="Analyzing..." IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Status / error messages -->
+        <StackPanel Grid.Row="2" Margin="0,8,0,0">
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Foreground="IndianRed"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
+            <TextBlock Text="{Binding StatusMessage}"
+                       Foreground="SeaGreen"
+                       IsVisible="{Binding StatusMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+
+        <!-- Translation result -->
+        <StackPanel Grid.Row="3" Spacing="4" Margin="0,12,0,0" IsVisible="{Binding HasResult}">
+            <TextBlock Text="Translation" FontWeight="Bold" />
+            <TextBlock Text="{Binding DisplayedTranslation}" TextWrapping="Wrap" FontSize="16" />
+        </StackPanel>
+
+        <!-- Word-by-word grammar analysis -->
+        <Grid Grid.Row="4" RowDefinitions="Auto,*,Auto" Margin="0,16,0,0" IsVisible="{Binding HasResult}">
+            <TextBlock Grid.Row="0" Text="Word-by-word grammar analysis (check words you don't know)" FontWeight="Bold" Margin="0,0,0,8" />
+
+            <ScrollViewer Grid.Row="1">
+                <ItemsControl ItemsSource="{Binding WordItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:WordAnalysisItem">
+                            <Border BorderBrush="Gray" BorderThickness="0,0,0,1" Padding="0,8">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Top" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{Binding Word}" FontWeight="Bold" FontSize="15" />
+                                        <TextBlock Text="{Binding Meaning}" FontStyle="Italic" Foreground="DarkBlue" />
+                                        <TextBlock Text="{Binding Gender}" />
+                                        <TextBlock Text="{Binding OriginalWord}" />
+                                        <TextBlock Text="{Binding PastParticiple}" />
+                                        <TextBlock Text="{Binding GrammarExplanation}" TextWrapping="Wrap" Foreground="Gray" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <Button Grid.Row="2" Content="Save selected words to vocabulary"
+                    Command="{Binding SaveSelectedWordsCommand}"
+                    Margin="0,8,0,0" />
+        </Grid>
+
+    </Grid>
+</UserControl>

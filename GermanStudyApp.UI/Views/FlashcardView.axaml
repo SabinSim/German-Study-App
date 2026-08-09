@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GermanStudyApp.UI.ViewModels"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="GermanStudyApp.UI.Views.FlashcardView"
+             x:DataType="vm:FlashcardViewModel">
+
+    <StackPanel Margin="16" Spacing="16" HorizontalAlignment="Center">
+
+        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+            <Button Content="Start Review Session" Command="{Binding StartSessionCommand}" />
+            <TextBlock Text="{Binding RemainingCount, StringFormat='Remaining: {0}'}"
+                       VerticalAlignment="Center" IsVisible="{Binding HasCurrentCard}" />
+        </StackPanel>
+
+        <TextBlock Text="{Binding StatusMessage}"
+                   HorizontalAlignment="Center"
+                   Foreground="SeaGreen"
+                   TextWrapping="Wrap"
+                   IsVisible="{Binding StatusMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
+
+        <!-- The flashcard itself: click to flip between the German word and its meaning -->
+        <Button Command="{Binding FlipCardCommand}"
+                IsVisible="{Binding HasCurrentCard}"
+                Width="360" Height="220"
+                HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+            <Panel>
+                <TextBlock Text="{Binding CurrentCard.Word}"
+                           IsVisible="{Binding !IsFlipped}"
+                           FontSize="24" FontWeight="Bold"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           TextWrapping="Wrap" TextAlignment="Center" />
+                <TextBlock Text="{Binding CurrentCard.Meaning}"
+                           IsVisible="{Binding IsFlipped}"
+                           FontSize="24" FontWeight="Bold"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           TextWrapping="Wrap" TextAlignment="Center" />
+            </Panel>
+        </Button>
+
+        <TextBlock Text="Click the card to flip it"
+                   IsVisible="{Binding HasCurrentCard}"
+                   HorizontalAlignment="Center" Foreground="Gray" FontSize="12" />
+
+        <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center"
+                    IsVisible="{Binding IsFlipped}">
+            <Button Content="Wrong" Command="{Binding MarkWrongCommand}" Background="IndianRed" />
+            <Button Content="Correct" Command="{Binding MarkCorrectCommand}" Background="SeaGreen" />
+        </StackPanel>
+
+    </StackPanel>
+</UserControl>

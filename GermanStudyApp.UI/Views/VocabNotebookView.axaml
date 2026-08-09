@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GermanStudyApp.UI.ViewModels"
+             xmlns:models="using:GermanStudyApp.Core.Models"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="GermanStudyApp.UI.Views.VocabNotebookView"
+             x:DataType="vm:VocabNotebookViewModel">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,*">
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
+            <TextBlock Text="My Vocabulary" FontWeight="Bold" FontSize="18" VerticalAlignment="Center" />
+            <Button Content="Refresh" Command="{Binding LoadCommand}" />
+            <TextBlock Text="Loading..." IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="1" Text="{Binding ErrorMessage}"
+                   Foreground="IndianRed" Margin="0,8,0,0"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
+
+        <ScrollViewer Grid.Row="2" Margin="0,12,0,0">
+            <ItemsControl ItemsSource="{Binding GroupedEntries}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:VocabDateGroup">
+                        <StackPanel Margin="0,0,0,20" Spacing="6">
+
+                            <!-- 날짜 헤더: 이 그룹에 몇 개가 저장됐는지도 같이 보여준다 -->
+                            <TextBlock Text="{Binding Date, StringFormat='{}{0:yyyy-MM-dd}'}"
+                                       FontWeight="Bold" FontSize="15"
+                                       Foreground="CornflowerBlue" />
+
+                            <ItemsControl ItemsSource="{Binding Entries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:VocabEntry">
+                                        <Border BorderBrush="Gray" BorderThickness="0,0,0,1" Padding="0,8">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="{Binding Word}" FontWeight="Bold" FontSize="15" />
+                                                    <TextBlock Text="{Binding Meaning}" TextWrapping="Wrap" Foreground="Gray" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding BoxLevel, StringFormat='Box {0}'}"
+                                                           VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

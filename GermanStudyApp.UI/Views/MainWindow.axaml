@@ -1,0 +1,22 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GermanStudyApp.UI.ViewModels"
+        xmlns:views="using:GermanStudyApp.UI.Views"
+        x:Class="GermanStudyApp.UI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="German Study App"
+        Width="800" Height="650">
+
+    <TabControl>
+        <TabItem Header="Sentence Analysis">
+            <views:AnalysisView DataContext="{Binding AnalysisVM}" />
+        </TabItem>
+        <TabItem Header="Vocabulary">
+            <views:VocabNotebookView DataContext="{Binding VocabVM}" />
+        </TabItem>
+        <TabItem Header="Flashcards">
+            <views:FlashcardView DataContext="{Binding FlashcardVM}" />
+        </TabItem>
+    </TabControl>
+
+</Window>
