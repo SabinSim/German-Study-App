@@ -64,7 +64,7 @@
                                     <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Top" />
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock Text="{Binding Word}" FontWeight="Bold" FontSize="15" />
-                                        <TextBlock Text="{Binding Meaning}" FontStyle="Italic" Foreground="DarkBlue" />
+                                        <TextBlock Text="{Binding Meaning}" FontStyle="Italic" Foreground="LightSkyBlue" />
                                         <TextBlock Text="{Binding Gender}" />
                                         <TextBlock Text="{Binding OriginalWord}" />
                                         <TextBlock Text="{Binding PastParticiple}" />

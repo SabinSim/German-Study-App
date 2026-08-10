@@ -9,4 +9,8 @@ public interface IVocabRepository
     Task<List<VocabEntry>> GetAllAsync(CancellationToken ct = default);
     
     Task UpdateAsync(VocabEntry entry, CancellationToken ct = default);
+    
+    Task DeleteAsync(VocabEntry entry, CancellationToken ct = default);
+    
+    Task DeleteAllAsync(CancellationToken ct = default);
 }

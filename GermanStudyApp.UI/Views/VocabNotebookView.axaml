@@ -6,19 +6,24 @@
              x:Class="GermanStudyApp.UI.Views.VocabNotebookView"
              x:DataType="vm:VocabNotebookViewModel">
 
-    <Grid Margin="16" RowDefinitions="Auto,Auto,*">
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*">
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
             <TextBlock Text="My Vocabulary" FontWeight="Bold" FontSize="18" VerticalAlignment="Center" />
             <Button Content="Refresh" Command="{Binding LoadCommand}" />
+            <Button Content="Delete All" Click="OnDeleteAllClick" Foreground="IndianRed" />
             <TextBlock Text="Loading..." IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
         </StackPanel>
 
         <TextBlock Grid.Row="1" Text="{Binding ErrorMessage}"
                    Foreground="IndianRed" Margin="0,8,0,0"
                    IsVisible="{Binding ErrorMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
+        
+        <TextBlock Grid.Row="2" Text="{Binding SuccessMessage}"
+                   Foreground="SeaGreen" Margin="0,8,0,0"
+                   IsVisible="{Binding SuccessMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
 
-        <ScrollViewer Grid.Row="2" Margin="0,12,0,0">
+        <ScrollViewer Grid.Row="3" Margin="0,12,0,0">
             <ItemsControl ItemsSource="{Binding GroupedEntries}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:VocabDateGroup">
@@ -33,13 +38,21 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:VocabEntry">
                                         <Border BorderBrush="Gray" BorderThickness="0,0,0,1" Padding="0,8">
-                                            <Grid ColumnDefinitions="*,Auto">
+                                            <Grid ColumnDefinitions="*,Auto,Auto">
                                                 <StackPanel Grid.Column="0" Spacing="2">
                                                     <TextBlock Text="{Binding Word}" FontWeight="Bold" FontSize="15" />
                                                     <TextBlock Text="{Binding Meaning}" TextWrapping="Wrap" Foreground="Gray" />
                                                 </StackPanel>
                                                 <TextBlock Grid.Column="1" Text="{Binding BoxLevel, StringFormat='Box {0}'}"
-                                                           VerticalAlignment="Center" />
+                                                           VerticalAlignment="Center" Margin="0,0,12,0" />
+                                                <Button Grid.Column="2" 
+                                                        Content="Delete" 
+                                                        Click="OnDeleteWordClick"
+                                                        CommandParameter="{Binding}"
+                                                        FontSize="12"
+                                                        Padding="8,4"
+                                                        Foreground="IndianRed"
+                                                        VerticalAlignment="Center" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>

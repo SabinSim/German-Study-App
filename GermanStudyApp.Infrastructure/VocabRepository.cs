@@ -29,4 +29,20 @@ public class VocabRepository : IVocabRepository
         db.VocabEntries.Update(entry);
         await db.SaveChangesAsync(ct);
     }
+
+    public async Task DeleteAsync(VocabEntry entry, CancellationToken ct = default)
+    {
+        using var db = new AppDbContext();
+        db.Database.EnsureCreated();
+        db.VocabEntries.Remove(entry);
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task DeleteAllAsync(CancellationToken ct = default)
+    {
+        using var db = new AppDbContext();
+        db.Database.EnsureCreated();
+        db.VocabEntries.RemoveRange(db.VocabEntries);
+        await db.SaveChangesAsync(ct);
+    }
 }

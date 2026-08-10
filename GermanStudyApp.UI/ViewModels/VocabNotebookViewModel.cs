@@ -19,6 +19,9 @@ public partial class VocabNotebookViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _errorMessage;
+    
+    [ObservableProperty]
+    private string? _successMessage;
 
     public ObservableCollection<VocabDateGroup> GroupedEntries { get; } = new();
 
@@ -32,6 +35,7 @@ public partial class VocabNotebookViewModel : ObservableObject
     {
         IsBusy = true;
         ErrorMessage = null;
+        SuccessMessage = null;
 
         try
         {
@@ -60,6 +64,40 @@ public partial class VocabNotebookViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    public async Task DeleteWordAsync(VocabEntry entry)
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            await _vocabRepository.DeleteAsync(entry);
+            SuccessMessage = "Word deleted successfully.";
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred while deleting the word: {ex.Message}";
+        }
+    }
+
+    public async Task DeleteAllAsync()
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            await _vocabRepository.DeleteAllAsync();
+            SuccessMessage = "All words deleted successfully.";
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred while deleting all words: {ex.Message}";
         }
     }
 }
