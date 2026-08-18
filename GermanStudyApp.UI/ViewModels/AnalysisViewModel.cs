@@ -15,9 +15,16 @@ public partial class AnalysisViewModel : ObservableObject
 {
     private readonly IGermanAnalysisService _analysisService;
     private readonly IVocabRepository _vocabRepository;
+    private readonly IDeckRepository _deckRepository;
 
     [ObservableProperty]
     private string _germanText = string.Empty;
+
+    // 단어를 저장할 때 어떤 덱에 넣을지 고르는 드롭다운용 목록/선택값.
+    public ObservableCollection<Deck> AvailableDecks { get; } = new();
+
+    [ObservableProperty]
+    private Deck? _selectedDeck;
 
     [ObservableProperty]
     private TargetLanguage _selectedTargetLanguage = TargetLanguage.English;
@@ -54,9 +61,31 @@ public partial class AnalysisViewModel : ObservableObject
     public AnalysisViewModel()
     {
         // 콘솔 테스트 때와 똑같이, 환경 변수에서 API 키를 읽어온다.
-        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
+        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            // API 키가 없으면 임시로 더미 값을 사용하고, 실제 분석 시 에러 메시지를 표시
+            apiKey = "DUMMY_KEY_NOT_SET";
+        }
+        
         _analysisService = new OpenAiAnalysisService(new HttpClient(), apiKey);
         _vocabRepository = new VocabRepository();
+        _deckRepository = new DeckRepository();
+    }
+
+    [RelayCommand]
+    private async Task LoadDecksAsync()
+    {
+        var decks = await _deckRepository.GetAllAsync();
+
+        AvailableDecks.Clear();
+        foreach (var deck in decks)
+        {
+            AvailableDecks.Add(deck);
+        }
+
+        SelectedDeck ??= AvailableDecks.FirstOrDefault();
     }
 
     [RelayCommand]
@@ -83,6 +112,10 @@ public partial class AnalysisViewModel : ObservableObject
                 WordItems.Add(new WordAnalysisItem(word));
             }
         }
+        catch (HttpRequestException ex) when (ex.Message.Contains("401"))
+        {
+            ErrorMessage = "API authentication failed. Please set your OPENAI_API_KEY environment variable with a valid API key.";
+        }
         catch (Exception ex)
         {
             ErrorMessage = $"An error occurred while analyzing: {ex.Message}";
@@ -104,6 +137,12 @@ public partial class AnalysisViewModel : ObservableObject
             return;
         }
 
+        if (SelectedDeck is null)
+        {
+            StatusMessage = "Please choose a deck to save into.";
+            return;
+        }
+
         IsBusy = true;
         ErrorMessage = null;
 
@@ -118,6 +157,7 @@ public partial class AnalysisViewModel : ObservableObject
                     DateAdded = DateTime.Now,
                     NextReviewDate = DateTime.Now,
                     BoxLevel = 1,
+                    DeckId = SelectedDeck.Id,
                 };
 
                 await _vocabRepository.SaveAsync(entry);

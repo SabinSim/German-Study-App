@@ -21,4 +21,20 @@ public class  DeckRepository : IDeckRepository
         db.Database.EnsureCreated();
         return await db.Decks.ToListAsync(ct);
     }
+
+    public async Task UpdateAsync(Deck deck, CancellationToken ct = default)
+    {
+        using var db = new AppDbContext();
+        db.Database.EnsureCreated();
+        db.Decks.Update(deck);
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task DeleteAsync(Deck deck, CancellationToken ct = default)
+    {
+        using var db = new AppDbContext();
+        db.Database.EnsureCreated();
+        db.Decks.Remove(deck);
+        await db.SaveChangesAsync(ct);
+    }
 }

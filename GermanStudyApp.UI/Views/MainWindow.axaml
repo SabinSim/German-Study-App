@@ -8,6 +8,9 @@
         Width="800" Height="650">
 
     <TabControl>
+        <TabItem Header="Decks">
+            <views:DeckView DataContext="{Binding DeckVM}" />
+        </TabItem>
         <TabItem Header="Sentence Analysis">
             <views:AnalysisView DataContext="{Binding AnalysisVM}" />
         </TabItem>

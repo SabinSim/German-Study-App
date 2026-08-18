@@ -14,6 +14,11 @@ public class OpenAiAnalysisService : IGermanAnalysisService
 
     public OpenAiAnalysisService(HttpClient httpClient, string apiKey)
     {
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new ArgumentException("API key cannot be null or empty.", nameof(apiKey));
+        }
+        
         _httpClient = httpClient;
         _apiKey = apiKey;
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);

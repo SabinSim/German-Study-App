@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using GermanStudyApp.Infrastructure.Data;
 using GermanStudyApp.UI.ViewModels;
 using GermanStudyApp.UI.Views;
 
@@ -11,6 +12,9 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        
+        // 데이터베이스 초기화
+        DbInitializer.Initialize();
     }
 
     public override void OnFrameworkInitializationCompleted()

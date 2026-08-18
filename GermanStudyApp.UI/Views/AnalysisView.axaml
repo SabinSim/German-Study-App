@@ -26,6 +26,14 @@
                           Width="120" />
             </StackPanel>
 
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="Save to Deck" VerticalAlignment="Center" />
+                <ComboBox ItemsSource="{Binding AvailableDecks}"
+                          SelectedItem="{Binding SelectedDeck}"
+                          Width="160"
+                          DisplayMemberBinding="{Binding Name}" />
+            </StackPanel>
+
             <CheckBox Content="Show literal translation" IsChecked="{Binding ShowLiteralTranslation}" />
 
             <Button Content="Analyze"
