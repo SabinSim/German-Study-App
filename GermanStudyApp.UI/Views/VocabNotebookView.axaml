@@ -10,6 +10,18 @@
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
             <TextBlock Text="My Vocabulary" FontWeight="Bold" FontSize="18" VerticalAlignment="Center" />
+
+            <ComboBox ItemsSource="{Binding AvailableDecks}"
+                      SelectedItem="{Binding SelectedDeckFilter}"
+                      PlaceholderText="All decks"
+                      Width="160">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:Deck">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
             <Button Content="Refresh" Command="{Binding LoadCommand}" />
             <Button Content="Delete All" Click="OnDeleteAllClick" Foreground="IndianRed" />
             <TextBlock Text="Loading..." IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />

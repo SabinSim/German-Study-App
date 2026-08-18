@@ -16,6 +16,7 @@ public partial class VocabNotebookView : UserControl
         {
             if (DataContext is VocabNotebookViewModel vm)
             {
+                await vm.LoadDecksCommand.ExecuteAsync(null);
                 await vm.LoadCommand.ExecuteAsync(null);
             }
         };

@@ -13,21 +13,47 @@ namespace GermanStudyApp.UI.ViewModels;
 public partial class VocabNotebookViewModel : ObservableObject
 {
     private readonly IVocabRepository _vocabRepository;
+    private readonly IDeckRepository _deckRepository;
 
     [ObservableProperty]
     private bool _isBusy;
 
     [ObservableProperty]
     private string? _errorMessage;
-    
+
     [ObservableProperty]
     private string? _successMessage;
+
+    // 필터 드롭다운용 덱 목록. 선택된 게 없으면(null) 전체를 보여준다.
+    public ObservableCollection<Deck> AvailableDecks { get; } = new();
+
+    [ObservableProperty]
+    private Deck? _selectedDeckFilter;
 
     public ObservableCollection<VocabDateGroup> GroupedEntries { get; } = new();
 
     public VocabNotebookViewModel()
     {
         _vocabRepository = new VocabRepository();
+        _deckRepository = new DeckRepository();
+    }
+
+    [RelayCommand]
+    private async Task LoadDecksAsync()
+    {
+        var decks = await _deckRepository.GetAllAsync();
+
+        AvailableDecks.Clear();
+        foreach (var deck in decks.OrderBy(d => d.Name))
+        {
+            AvailableDecks.Add(deck);
+        }
+    }
+
+    // 필터 드롭다운에서 다른 덱을 고르면, 목록을 자동으로 다시 불러온다.
+    partial void OnSelectedDeckFilterChanged(Deck? value)
+    {
+        _ = LoadAsync();
     }
 
     [RelayCommand]
@@ -41,11 +67,15 @@ public partial class VocabNotebookViewModel : ObservableObject
         {
             var all = await _vocabRepository.GetAllAsync();
 
+            var filtered = SelectedDeckFilter is null
+                ? all
+                : all.Where(e => e.DeckId == SelectedDeckFilter.Id).ToList();
+
             GroupedEntries.Clear();
 
             // DateAdded의 "날짜" 부분(시간은 무시)으로 묶고,
             // 최근 날짜가 위로 오도록 내림차순 정렬한다.
-            var groups = all
+            var groups = filtered
                 .GroupBy(e => e.DateAdded.Date)
                 .OrderByDescending(g => g.Key)
                 .Select(g => new VocabDateGroup(
