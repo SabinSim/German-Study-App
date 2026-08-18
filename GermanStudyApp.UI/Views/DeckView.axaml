@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GermanStudyApp.UI.ViewModels"
+             xmlns:models="using:GermanStudyApp.Core.Models"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="GermanStudyApp.UI.Views.DeckView"
+             x:DataType="vm:DeckViewModel">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,*" ColumnDefinitions="*">
+
+        <TextBlock Grid.Row="0" Text="Decks" FontSize="22" FontWeight="Bold" Margin="0,0,0,12" />
+
+        <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,16" MaxWidth="420" HorizontalAlignment="Left">
+            <TextBlock Text="Editing deck (choose a new name/parent below)"
+                       FontStyle="Italic"
+                       IsVisible="{Binding IsEditing}" />
+
+            <TextBox Watermark="New deck name" Text="{Binding NewDeckName}" />
+
+            <ComboBox ItemsSource="{Binding ParentOptions}"
+                      SelectedItem="{Binding SelectedParentDeck}"
+                      PlaceholderText="Parent deck (optional)"
+                      HorizontalAlignment="Stretch">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:Deck">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="{Binding SaveButtonText}" Command="{Binding SaveDeckCommand}" />
+                <Button Content="Cancel" Command="{Binding CancelEditCommand}" IsVisible="{Binding IsEditing}" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding StatusMessage}"
+                       Foreground="IndianRed"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding StatusMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+
+        <ListBox Grid.Row="2" ItemsSource="{Binding DisplayDecks}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:DeckDisplayItem">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <TextBlock Grid.Column="0" Text="{Binding IndentedName}"
+                                   FontFamily="Consolas,Menlo,monospace" FontSize="14"
+                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="Edit"
+                                Click="OnEditDeckClick"
+                                CommandParameter="{Binding Source}"
+                                FontSize="12" Padding="8,4" Margin="0,0,4,0" />
+                        <Button Grid.Column="2" Content="Delete"
+                                Click="OnDeleteDeckClick"
+                                CommandParameter="{Binding Source}"
+                                FontSize="12" Padding="8,4"
+                                Foreground="IndianRed" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+    </Grid>
+</UserControl>

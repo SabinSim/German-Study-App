@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:GermanStudyApp.UI.ViewModels"
+             xmlns:models="using:GermanStudyApp.Core.Models"
              xmlns:conv="using:Avalonia.Data.Converters"
              x:Class="GermanStudyApp.UI.Views.FlashcardView"
              x:DataType="vm:FlashcardViewModel">
@@ -8,6 +9,17 @@
     <StackPanel Margin="16" Spacing="16" HorizontalAlignment="Center">
 
         <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+            <ComboBox ItemsSource="{Binding AvailableDecks}"
+                      SelectedItem="{Binding SelectedDeckFilter}"
+                      PlaceholderText="All decks"
+                      Width="160">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:Deck">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
             <Button Content="Start Review Session" Command="{Binding StartSessionCommand}" />
             <TextBlock Text="{Binding RemainingCount, StringFormat='Remaining: {0}'}"
                        VerticalAlignment="Center" IsVisible="{Binding HasCurrentCard}" />
