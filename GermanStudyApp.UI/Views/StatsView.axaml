@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GermanStudyApp.UI.ViewModels"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="GermanStudyApp.UI.Views.StatsView"
+             x:DataType="vm:StatsViewModel">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,*">
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
+            <TextBlock Text="Study Stats" FontWeight="Bold" FontSize="18" VerticalAlignment="Center" />
+            <Button Content="Refresh" Command="{Binding LoadCommand}" />
+            <TextBlock Text="Loading..." IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="1" Text="{Binding ErrorMessage}"
+                   Foreground="IndianRed" Margin="0,8,0,0"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="24" Margin="0,12,0,0">
+            <StackPanel>
+                <TextBlock Text="{Binding TotalWords}" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" />
+                <TextBlock Text="Total Words" Foreground="Gray" HorizontalAlignment="Center" />
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="{Binding TotalLeeches}" FontSize="24" FontWeight="Bold"
+                           Foreground="IndianRed" HorizontalAlignment="Center" />
+                <TextBlock Text="Leeches" Foreground="Gray" HorizontalAlignment="Center" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 박스레벨 분포: 박스 1~5마다 몇 개의 단어가 있는지 -->
+        <StackPanel Grid.Row="3" Margin="0,20,0,0" Spacing="6">
+            <TextBlock Text="Words by Box Level" FontWeight="Bold" Margin="0,0,0,4" />
+            <ItemsControl ItemsSource="{Binding BoxLevelStats}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BoxLevelStat">
+                        <Grid ColumnDefinitions="60,*,40" Margin="0,2">
+                            <TextBlock Grid.Column="0" Text="{Binding BoxLevel, StringFormat='Box {0}'}"
+                                       VerticalAlignment="Center" />
+                            <Border Grid.Column="1" Background="CornflowerBlue" HorizontalAlignment="Left"
+                                    Height="14" CornerRadius="2"
+                                    Width="{Binding Count}" MinWidth="2" />
+                            <TextBlock Grid.Column="2" Text="{Binding Count}" VerticalAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- 날짜별로 몇 개씩 저장했는지 -->
+        <Grid Grid.Row="4" RowDefinitions="Auto,*" Margin="0,20,0,0">
+            <TextBlock Grid.Row="0" Text="Words Saved by Date" FontWeight="Bold" Margin="0,0,0,4" />
+            <ScrollViewer Grid.Row="1">
+                <ItemsControl ItemsSource="{Binding DailyStats}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DailyStat">
+                            <Grid ColumnDefinitions="120,*" Margin="0,2">
+                                <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat='{}{0:yyyy-MM-dd}'}"
+                                           Foreground="CornflowerBlue" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding Count, StringFormat='{}{0} word(s)'}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+    </Grid>
+</UserControl>

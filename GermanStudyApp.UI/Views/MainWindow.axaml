@@ -20,6 +20,9 @@
         <TabItem Header="Flashcards">
             <views:FlashcardView DataContext="{Binding FlashcardVM}" />
         </TabItem>
+        <TabItem Header="Stats">
+            <views:StatsView DataContext="{Binding StatsVM}" />
+        </TabItem>
     </TabControl>
 
 </Window>
