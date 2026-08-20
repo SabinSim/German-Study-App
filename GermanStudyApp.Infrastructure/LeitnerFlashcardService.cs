@@ -5,21 +5,27 @@ namespace GermanStudyApp.Infrastructure;
 
 public class LeitnerFlashcardService : IFlashcardService
 {
-    public void ApplyReviewResult(VocabEntry entry, bool wasCorrect)
+    public void ApplyReviewResult(VocabEntry entry, ReviewRating rating)
     {
-        if (wasCorrect)
-        {
-            entry.BoxLevel += 1;
+         
+        switch (rating)
+        {   
+            case ReviewRating.Again:
+                entry.BoxLevel = 1;
+                break;
+            case ReviewRating.Easy:
+                entry. BoxLevel += 2;
+                break;
+            case ReviewRating.Good:
+                entry.BoxLevel += 1;
+                break;
+            case ReviewRating.Hard:
+                break;
             
-            if (entry.BoxLevel > 5)
-            {
-                entry.BoxLevel = 5;
-            }
         }
-        else
-        {
-            entry.BoxLevel = 1;
-        }
+        
+        if (entry.BoxLevel > 5) entry.BoxLevel = 5;
+
         
         entry.NextReviewDate =  DateTime.Now.AddDays(entry.BoxLevel);
     }

@@ -112,12 +112,18 @@ public partial class FlashcardViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private Task MarkCorrectAsync() => AnswerAsync(wasCorrect: true);
+    private Task MarkAgainAsync() => AnswerAsync(ReviewRating.Again);
 
     [RelayCommand]
-    private Task MarkWrongAsync() => AnswerAsync(wasCorrect: false);
+    private Task MarkHardAsync() => AnswerAsync(ReviewRating.Hard);
 
-    private async Task AnswerAsync(bool wasCorrect)
+    [RelayCommand]
+    private Task MarkGoodAsync() => AnswerAsync(ReviewRating.Good);
+
+    [RelayCommand]
+    private Task MarkEasyAsync() => AnswerAsync(ReviewRating.Easy);
+
+    private async Task AnswerAsync(ReviewRating rating)
     {
         if (CurrentCard is null)
         {
@@ -129,7 +135,7 @@ public partial class FlashcardViewModel : ObservableObject
         try
         {
             // 1) 메모리에서 박스 레벨 / 다음 복습 날짜를 계산하고
-            _flashcardService.ApplyReviewResult(CurrentCard, wasCorrect);
+            _flashcardService.ApplyReviewResult(CurrentCard, rating);
             // 2) 그 결과를 데이터베이스에 실제로 반영한다
             await _vocabRepository.UpdateAsync(CurrentCard);
 

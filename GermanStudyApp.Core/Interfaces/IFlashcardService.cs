@@ -4,6 +4,6 @@ namespace GermanStudyApp.Core.Interfaces;
 
 public interface IFlashcardService
 {
-    void ApplyReviewResult(VocabEntry entry, bool wasCorrect);
+    void ApplyReviewResult(VocabEntry entry, ReviewRating rating);
 }
 

@@ -54,10 +54,12 @@
                    IsVisible="{Binding HasCurrentCard}"
                    HorizontalAlignment="Center" Foreground="Gray" FontSize="12" />
 
-        <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center"
+        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center"
                     IsVisible="{Binding IsFlipped}">
-            <Button Content="Wrong" Command="{Binding MarkWrongCommand}" Background="IndianRed" />
-            <Button Content="Correct" Command="{Binding MarkCorrectCommand}" Background="SeaGreen" />
+            <Button Content="Again" Command="{Binding MarkAgainCommand}" Background="IndianRed" />
+            <Button Content="Hard" Command="{Binding MarkHardCommand}" Background="Orange" />
+            <Button Content="Good" Command="{Binding MarkGoodCommand}" Background="SeaGreen" />
+            <Button Content="Easy" Command="{Binding MarkEasyCommand}" Background="CornflowerBlue" />
         </StackPanel>
 
     </StackPanel>
