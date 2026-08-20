@@ -134,10 +134,19 @@ public partial class FlashcardViewModel : ObservableObject
 
         try
         {
+            // Again/Hard는 "아직 잘 모른다"는 뜻이니까, 같은 세션 안에서 다시 볼 수 있도록
+            // 큐 맨 뒤에 다시 넣어둔다 (재도전 기회).
+            var shouldRequeue = rating is ReviewRating.Again or ReviewRating.Hard;
+
             // 1) 메모리에서 박스 레벨 / 다음 복습 날짜를 계산하고
             _flashcardService.ApplyReviewResult(CurrentCard, rating);
             // 2) 그 결과를 데이터베이스에 실제로 반영한다
             await _vocabRepository.UpdateAsync(CurrentCard);
+
+            if (shouldRequeue)
+            {
+                _dueQueue.Enqueue(CurrentCard);
+            }
 
             RemainingCount = _dueQueue.Count;
             IsFlipped = false;
