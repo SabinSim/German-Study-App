@@ -3,8 +3,13 @@
              xmlns:vm="using:GermanStudyApp.UI.ViewModels"
              xmlns:models="using:GermanStudyApp.Core.Models"
              xmlns:conv="using:Avalonia.Data.Converters"
+             xmlns:converters="using:GermanStudyApp.UI.Converters"
              x:Class="GermanStudyApp.UI.Views.VocabNotebookView"
              x:DataType="vm:VocabNotebookViewModel">
+
+    <UserControl.Resources>
+        <converters:LeechConverter x:Key="LeechConverter" />
+    </UserControl.Resources>
 
     <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*">
 
@@ -52,7 +57,13 @@
                                         <Border BorderBrush="Gray" BorderThickness="0,0,0,1" Padding="0,8">
                                             <Grid ColumnDefinitions="*,Auto,Auto">
                                                 <StackPanel Grid.Column="0" Spacing="2">
-                                                    <TextBlock Text="{Binding Word}" FontWeight="Bold" FontSize="15" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <TextBlock Text="{Binding Word}" FontWeight="Bold" FontSize="15" />
+                                                        <TextBlock Text="🔴 Leech"
+                                                                   Foreground="IndianRed" FontSize="12"
+                                                                   VerticalAlignment="Center"
+                                                                   IsVisible="{Binding AgainCount, Converter={StaticResource LeechConverter}}" />
+                                                    </StackPanel>
                                                     <TextBlock Text="{Binding Meaning}" TextWrapping="Wrap" Foreground="Gray" />
                                                 </StackPanel>
                                                 <TextBlock Grid.Column="1" Text="{Binding BoxLevel, StringFormat='Box {0}'}"

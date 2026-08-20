@@ -9,4 +9,5 @@ public class VocabEntry
     public DateTime NextReviewDate { get; set; }
     public int BoxLevel { get; set; }
     public required int DeckId { get; set; }
+    public int AgainCount { get; set; }
 }

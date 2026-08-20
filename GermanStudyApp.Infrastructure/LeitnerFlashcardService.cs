@@ -12,6 +12,7 @@ public class LeitnerFlashcardService : IFlashcardService
         {   
             case ReviewRating.Again:
                 entry.BoxLevel = 1;
+                entry.AgainCount += 1;
                 break;
             case ReviewRating.Easy:
                 entry. BoxLevel += 2;
