@@ -11,4 +11,5 @@ public partial class MainWindowViewModel : ObservableObject
     public VocabNotebookViewModel VocabVM { get; } = new();
     public FlashcardViewModel FlashcardVM { get; } = new();
     public StatsViewModel StatsVM { get; } = new();
+    public ImportViewModel ImportVM { get; } = new();
 }

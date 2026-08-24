@@ -23,6 +23,9 @@
         <TabItem Header="Stats">
             <views:StatsView DataContext="{Binding StatsVM}" />
         </TabItem>
+        <TabItem Header="Import">
+            <views:ImportView DataContext="{Binding ImportVM}" />
+        </TabItem>
     </TabControl>
 
 </Window>

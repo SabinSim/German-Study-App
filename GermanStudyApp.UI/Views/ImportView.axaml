@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GermanStudyApp.UI.ViewModels"
+             xmlns:models="using:GermanStudyApp.Core.Models"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="GermanStudyApp.UI.Views.ImportView"
+             x:DataType="vm:ImportViewModel">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,*">
+
+        <TextBlock Grid.Row="0" Text="Import Words from File" FontSize="18" FontWeight="Bold" Margin="0,0,0,12" />
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
+            <ComboBox ItemsSource="{Binding AvailableDecks}"
+                      SelectedItem="{Binding SelectedDeck}"
+                      PlaceholderText="Choose a deck"
+                      Width="160">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:Deck">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <Button Content="Choose .txt File..." Click="OnChooseFileClick" />
+
+            <TextBlock Text="Working..." IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="2" Text="One word per line, format: Word,Meaning"
+                   Foreground="Gray" FontSize="12" Margin="0,6,0,0" />
+
+        <TextBlock Grid.Row="3" Text="{Binding StatusMessage}"
+                   Foreground="IndianRed" Margin="0,8,0,0"
+                   TextWrapping="Wrap"
+                   IsVisible="{Binding StatusMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
+
+        <Grid Grid.Row="4" RowDefinitions="Auto,*" Margin="0,16,0,0" IsVisible="{Binding HasPreview}">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,8">
+                <TextBlock Text="Preview (check the words you want to save)" FontWeight="Bold" VerticalAlignment="Center" />
+                <Button Content="Save Selected" Command="{Binding SaveSelectedCommand}" />
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1">
+                <ItemsControl ItemsSource="{Binding PreviewEntries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ImportEntryItem">
+                            <Border BorderBrush="Gray" BorderThickness="0,0,0,1" Padding="0,6">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <CheckBox IsChecked="{Binding IsSelected}" />
+                                    <TextBlock Text="{Binding Word}" FontWeight="Bold" Width="140" />
+                                    <TextBlock Text="{Binding Meaning}" Foreground="Gray" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+    </Grid>
+</UserControl>
