@@ -10,4 +10,5 @@ public class VocabEntry
     public int BoxLevel { get; set; }
     public required int DeckId { get; set; }
     public int AgainCount { get; set; }
+    public bool IsSuspended { get; set; }
 }

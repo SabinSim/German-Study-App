@@ -114,6 +114,23 @@ public partial class VocabNotebookViewModel : ObservableObject
         }
     }
 
+    public async Task ToggleSuspendAsync(VocabEntry entry)
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            entry.IsSuspended = !entry.IsSuspended;
+            await _vocabRepository.UpdateAsync(entry);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred while updating the word: {ex.Message}";
+        }
+    }
+
     public async Task DeleteAllAsync()
     {
         ErrorMessage = null;

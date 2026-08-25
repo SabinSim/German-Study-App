@@ -43,6 +43,14 @@ public partial class VocabNotebookView : UserControl
         }
     }
 
+    private async void OnToggleSuspendClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.CommandParameter is VocabEntry entry && DataContext is VocabNotebookViewModel vm)
+        {
+            await vm.ToggleSuspendAsync(entry);
+        }
+    }
+
     private async void OnDeleteAllClick(object? sender, RoutedEventArgs e)
     {
         var dialog = new ConfirmationDialog

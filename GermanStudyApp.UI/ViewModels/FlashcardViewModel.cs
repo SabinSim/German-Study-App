@@ -79,7 +79,8 @@ public partial class FlashcardViewModel : ObservableObject
             }
 
             // 오늘 날짜 기준으로 "복습해야 할 때가 된" 단어만 골라서 큐에 담는다.
-            var due = all.Where(e => e.NextReviewDate <= DateTime.Now).ToList();
+            // 일시정지된 단어는 여기서 제외한다.
+            var due = all.Where(e => e.NextReviewDate <= DateTime.Now && !e.IsSuspended).ToList();
 
             _dueQueue = new Queue<VocabEntry>(due);
             RemainingCount = _dueQueue.Count;
