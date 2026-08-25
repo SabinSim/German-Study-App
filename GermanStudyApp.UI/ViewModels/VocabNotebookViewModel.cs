@@ -30,6 +30,10 @@ public partial class VocabNotebookViewModel : ObservableObject
     [ObservableProperty]
     private Deck? _selectedDeckFilter;
 
+    // 단어 이름/뜻으로 검색하는 검색창용 텍스트.
+    [ObservableProperty]
+    private string _searchText = string.Empty;
+
     public ObservableCollection<VocabDateGroup> GroupedEntries { get; } = new();
 
     public VocabNotebookViewModel()
@@ -56,6 +60,12 @@ public partial class VocabNotebookViewModel : ObservableObject
         _ = LoadAsync();
     }
 
+    // 검색창에 글자를 입력할 때마다, 목록을 자동으로 다시 불러온다.
+    partial void OnSearchTextChanged(string value)
+    {
+        _ = LoadAsync();
+    }
+
     [RelayCommand]
     private async Task LoadAsync()
     {
@@ -70,6 +80,14 @@ public partial class VocabNotebookViewModel : ObservableObject
             var filtered = SelectedDeckFilter is null
                 ? all
                 : all.Where(e => e.DeckId == SelectedDeckFilter.Id).ToList();
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                filtered = filtered
+                    .Where(e => e.Word.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                                || e.Meaning.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
 
             GroupedEntries.Clear();
 

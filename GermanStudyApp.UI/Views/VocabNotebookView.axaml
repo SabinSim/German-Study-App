@@ -18,6 +18,8 @@
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
             <TextBlock Text="My Vocabulary" FontWeight="Bold" FontSize="18" VerticalAlignment="Center" />
 
+            <TextBox Text="{Binding SearchText}" Watermark="Search word or meaning..." Width="180" />
+
             <ComboBox ItemsSource="{Binding AvailableDecks}"
                       SelectedItem="{Binding SelectedDeckFilter}"
                       PlaceholderText="All decks"
