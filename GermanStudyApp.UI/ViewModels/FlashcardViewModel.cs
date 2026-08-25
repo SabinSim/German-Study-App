@@ -13,6 +13,8 @@ namespace GermanStudyApp.UI.ViewModels;
 
 public partial class FlashcardViewModel : ObservableObject
 {
+    private const int LeechThreshold = 5;
+
     private readonly IVocabRepository _vocabRepository;
     private readonly IDeckRepository _deckRepository;
     private readonly IFlashcardService _flashcardService;
@@ -41,6 +43,10 @@ public partial class FlashcardViewModel : ObservableObject
 
     [ObservableProperty]
     private Deck? _selectedDeckFilter;
+
+    // 켜져 있으면, 예정일과 상관없이 리치(계속 틀리는 단어)만 골라서 복습한다.
+    [ObservableProperty]
+    private bool _reviewLeechesOnly;
 
     public bool HasCurrentCard => CurrentCard is not null;
 
@@ -78,9 +84,14 @@ public partial class FlashcardViewModel : ObservableObject
                 all = all.Where(e => e.DeckId == SelectedDeckFilter.Id).ToList();
             }
 
-            // 오늘 날짜 기준으로 "복습해야 할 때가 된" 단어만 골라서 큐에 담는다.
-            // 일시정지된 단어는 여기서 제외한다.
-            var due = all.Where(e => e.NextReviewDate <= DateTime.Now && !e.IsSuspended).ToList();
+            // 일시정지된 단어는 항상 제외한다.
+            var candidates = all.Where(e => !e.IsSuspended);
+
+            var due = ReviewLeechesOnly
+                // 리치만 복습 모드: 예정일은 무시하고, 리치인 단어만 모은다.
+                ? candidates.Where(e => e.AgainCount >= LeechThreshold).ToList()
+                // 평소 모드: 오늘 날짜 기준으로 "복습해야 할 때가 된" 단어만 고른다.
+                : candidates.Where(e => e.NextReviewDate <= DateTime.Now).ToList();
 
             _dueQueue = new Queue<VocabEntry>(due);
             RemainingCount = _dueQueue.Count;
@@ -88,7 +99,9 @@ public partial class FlashcardViewModel : ObservableObject
             if (_dueQueue.Count == 0)
             {
                 CurrentCard = null;
-                StatusMessage = "No words are due for review right now.";
+                StatusMessage = ReviewLeechesOnly
+                    ? "No leeches right now. Nice work!"
+                    : "No words are due for review right now.";
             }
             else
             {
