@@ -27,9 +27,15 @@ public partial class StatsViewModel : ObservableObject
     [ObservableProperty]
     private int _totalLeeches;
 
+    [ObservableProperty]
+    private int _overdueCount;
+
     public ObservableCollection<DailyStat> DailyStats { get; } = new();
 
     public ObservableCollection<BoxLevelStat> BoxLevelStats { get; } = new();
+
+    // 앞으로 7일 동안 날짜별로 복습해야 할 단어 수 (예측).
+    public ObservableCollection<DailyStat> ForecastStats { get; } = new();
 
     public StatsViewModel()
     {
@@ -65,6 +71,20 @@ public partial class StatsViewModel : ObservableObject
             {
                 var count = all.Count(e => e.BoxLevel == box);
                 BoxLevelStats.Add(new BoxLevelStat(box, count));
+            }
+
+            // 일시정지된 단어는 어차피 복습 큐에 안 나오니까, 예측에서도 제외한다.
+            var reviewable = all.Where(e => !e.IsSuspended).ToList();
+            var today = DateTime.Now.Date;
+
+            OverdueCount = reviewable.Count(e => e.NextReviewDate.Date < today);
+
+            ForecastStats.Clear();
+            for (var i = 0; i < 7; i++)
+            {
+                var date = today.AddDays(i);
+                var count = reviewable.Count(e => e.NextReviewDate.Date == date);
+                ForecastStats.Add(new DailyStat(date, count));
             }
         }
         catch (Exception ex)
