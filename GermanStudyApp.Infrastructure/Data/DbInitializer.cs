@@ -13,7 +13,7 @@ public static class DbInitializer
         using var db = new AppDbContext();
         
         // 데이터베이스와 테이블 생성
-        db.Database.EnsureCreated();
+        db.Database.Migrate();
         
         // 기본 Deck이 없으면 생성
         if (!db.Decks.Any())

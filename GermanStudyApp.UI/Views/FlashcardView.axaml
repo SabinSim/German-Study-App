@@ -23,6 +23,7 @@
             <CheckBox Content="🔴 Leeches only" IsChecked="{Binding ReviewLeechesOnly}" VerticalAlignment="Center" />
 
             <Button Content="Start Review Session" Command="{Binding StartSessionCommand}" />
+            <Button Content="↩ Undo" Command="{Binding UndoLastAnswerCommand}" IsVisible="{Binding HasLastAnswer}" />
             <TextBlock Text="{Binding RemainingCount, StringFormat='Remaining: {0}'}"
                        VerticalAlignment="Center" IsVisible="{Binding HasCurrentCard}" />
         </StackPanel>

@@ -22,6 +22,13 @@ public partial class FlashcardViewModel : ObservableObject
     // 오늘 복습해야 할 단어들이 순서대로 대기하는 줄(큐).
     private Queue<VocabEntry> _dueQueue = new();
 
+    // Undo를 위해, 방금 답한 카드의 "답하기 전" 상태를 잠깐 기억해두는 곳.
+    private VocabEntry? _lastAnsweredCard;
+    private int _lastBoxLevel;
+    private DateTime _lastNextReviewDate;
+    private int _lastAgainCount;
+    private bool _lastWasRequeued;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCurrentCard))]
     private VocabEntry? _currentCard;
@@ -50,6 +57,8 @@ public partial class FlashcardViewModel : ObservableObject
 
     public bool HasCurrentCard => CurrentCard is not null;
 
+    public bool HasLastAnswer => _lastAnsweredCard is not null;
+
     public FlashcardViewModel()
     {
         _vocabRepository = new VocabRepository();
@@ -74,6 +83,10 @@ public partial class FlashcardViewModel : ObservableObject
     {
         IsBusy = true;
         StatusMessage = null;
+
+        // 새 세션을 시작하면, 이전 세션의 Undo 기록은 더 이상 의미가 없다.
+        _lastAnsweredCard = null;
+        OnPropertyChanged(nameof(HasLastAnswer));
 
         try
         {
@@ -152,6 +165,14 @@ public partial class FlashcardViewModel : ObservableObject
             // 큐 맨 뒤에 다시 넣어둔다 (재도전 기회).
             var shouldRequeue = rating is ReviewRating.Again or ReviewRating.Hard;
 
+            // Undo를 위해, 바꾸기 전 상태를 먼저 기억해둔다.
+            _lastAnsweredCard = CurrentCard;
+            _lastBoxLevel = CurrentCard.BoxLevel;
+            _lastNextReviewDate = CurrentCard.NextReviewDate;
+            _lastAgainCount = CurrentCard.AgainCount;
+            _lastWasRequeued = shouldRequeue;
+            OnPropertyChanged(nameof(HasLastAnswer));
+
             // 1) 메모리에서 박스 레벨 / 다음 복습 날짜를 계산하고
             _flashcardService.ApplyReviewResult(CurrentCard, rating);
             // 2) 그 결과를 데이터베이스에 실제로 반영한다
@@ -175,6 +196,64 @@ public partial class FlashcardViewModel : ObservableObject
         catch (Exception ex)
         {
             StatusMessage = $"An error occurred while saving your answer: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task UndoLastAnswerAsync()
+    {
+        if (_lastAnsweredCard is null)
+        {
+            return;
+        }
+
+        IsBusy = true;
+
+        try
+        {
+            var card = _lastAnsweredCard;
+
+            // 1) 방금 넣은 다음 카드는 다시 큐 맨 앞으로 되돌려 놓는다 (아직 안 본 것으로).
+            if (CurrentCard is not null)
+            {
+                var requeued = new Queue<VocabEntry>();
+                requeued.Enqueue(CurrentCard);
+                foreach (var entry in _dueQueue)
+                {
+                    requeued.Enqueue(entry);
+                }
+                _dueQueue = requeued;
+            }
+
+            // 2) Requeue 됐던 카드라면, 큐 맨 뒤에 들어간 사본을 다시 제거한다.
+            if (_lastWasRequeued && _dueQueue.Contains(card))
+            {
+                var rebuilt = new Queue<VocabEntry>(_dueQueue.Where(e => e != card));
+                _dueQueue = rebuilt;
+            }
+
+            // 3) 카드의 값을 답하기 전 상태로 되돌리고, DB에도 반영한다.
+            card.BoxLevel = _lastBoxLevel;
+            card.NextReviewDate = _lastNextReviewDate;
+            card.AgainCount = _lastAgainCount;
+            await _vocabRepository.UpdateAsync(card);
+
+            // 4) 그 카드를 다시 화면에 보여준다.
+            IsFlipped = false;
+            CurrentCard = card;
+            RemainingCount = _dueQueue.Count;
+            StatusMessage = null;
+
+            _lastAnsweredCard = null;
+            OnPropertyChanged(nameof(HasLastAnswer));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"An error occurred while undoing your answer: {ex.Message}";
         }
         finally
         {
