@@ -16,3 +16,6 @@ obj/
 ## OS
 .DS_Store
 Thumbs.db
+
+## Published app bundle
+GermanStudyApp.app/
