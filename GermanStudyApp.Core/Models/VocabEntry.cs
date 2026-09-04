@@ -11,4 +11,5 @@ public class VocabEntry
     public required int DeckId { get; set; }
     public int AgainCount { get; set; }
     public bool IsSuspended { get; set; }
+    public string? ExampleSentence { get; set; }
 }

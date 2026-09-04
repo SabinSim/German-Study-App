@@ -8,4 +8,9 @@ public interface IGermanAnalysisService
         string germanText,
         TargetLanguage targetLanguage,
         CancellationToken ct = default);
+    
+    Task<string> GenerateExampleSentenceAsync(
+        string word,
+        GermanLevel level,
+        CancellationToken ct = default);
 }

@@ -63,7 +63,7 @@ public class OpenAiAnalysisService : IGermanAnalysisService
                                  }
                                  """;
 
-            var content = await RequestCompletionContentAsync(systemPrompt, germanText, ct);
+            var content = await RequestCompletionContentAsync(systemPrompt, germanText, true, ct);
 
             var result = JsonSerializer.Deserialize<AnalyzedSentence>(content, new JsonSerializerOptions
             {
@@ -86,12 +86,25 @@ public class OpenAiAnalysisService : IGermanAnalysisService
         throw new InvalidOperationException("AI response did not satisfy the requested output language.");
     }
 
-    private async Task<string> RequestCompletionContentAsync(string systemPrompt, string germanText, CancellationToken ct)
+    public async Task<string> GenerateExampleSentenceAsync(string word, GermanLevel level,
+        CancellationToken ct = default)
+    {
+        var systemPrompt = $"""
+                            You are a German teacher. Write exactly one natural German example sentence
+                            that uses the word "{word}", at CEFR level {level}.
+                            Respond only with the German sentence, without any additional text or explanation.
+                            """;
+        var content = await RequestCompletionContentAsync(systemPrompt, word, false, ct);
+        
+        return content.Trim();
+    }
+
+    private async Task<string> RequestCompletionContentAsync(string systemPrompt, string germanText, bool requireJson, CancellationToken ct)
     {
         var requestBody = new
         {
             model = "gpt-4o-mini",
-            response_format = new { type = "json_object" },
+            response_format =  requireJson ? new { type = "json_object" } : null,
             messages = new object[]
             {
                 new { role = "system", content = systemPrompt },
