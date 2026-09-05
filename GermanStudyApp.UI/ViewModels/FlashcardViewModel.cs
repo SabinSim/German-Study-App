@@ -18,6 +18,7 @@ public partial class FlashcardViewModel : ObservableObject
     private readonly IVocabRepository _vocabRepository;
     private readonly IDeckRepository _deckRepository;
     private readonly IFlashcardService _flashcardService;
+    private readonly IGermanAnalysisService _analysisService;
 
     // 오늘 복습해야 할 단어들이 순서대로 대기하는 줄(큐).
     private Queue<VocabEntry> _dueQueue = new();
@@ -31,6 +32,7 @@ public partial class FlashcardViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCurrentCard))]
+    [NotifyPropertyChangedFor(nameof(HasExampleSentence))]
     private VocabEntry? _currentCard;
 
     [ObservableProperty]
@@ -55,13 +57,23 @@ public partial class FlashcardViewModel : ObservableObject
     [ObservableProperty]
     private bool _reviewLeechesOnly;
 
+    // 카드 뒷면의 "Analyze example" 버튼을 눌렀을 때 채워지는 분석 결과.
+    [ObservableProperty]
+    private AnalyzedSentence? _exampleAnalysis;
+
+    [ObservableProperty]
+    private bool _isAnalyzingExample;
+
     public bool HasCurrentCard => CurrentCard is not null;
+
+    public bool HasExampleSentence => !string.IsNullOrWhiteSpace(CurrentCard?.ExampleSentence);
 
     public bool HasLastAnswer => _lastAnsweredCard is not null;
 
     public FlashcardViewModel()
     {
-        _vocabRepository = new VocabRepository(AnalysisServiceFactory.Create());
+        _analysisService = AnalysisServiceFactory.Create();
+        _vocabRepository = new VocabRepository(_analysisService);
         _deckRepository = new DeckRepository();
         _flashcardService = new LeitnerFlashcardService();
     }
@@ -132,10 +144,41 @@ public partial class FlashcardViewModel : ObservableObject
         }
     }
 
+    // 카드가 바뀌면(다음 카드로 넘어가거나 세션을 새로 시작하면), 이전 카드의 분석 결과는 더 이상 의미가 없다.
+    partial void OnCurrentCardChanged(VocabEntry? value)
+    {
+        ExampleAnalysis = null;
+    }
+
     [RelayCommand]
     private void FlipCard()
     {
         IsFlipped = !IsFlipped;
+    }
+
+    [RelayCommand]
+    private async Task AnalyzeExampleAsync()
+    {
+        if (CurrentCard is null || string.IsNullOrWhiteSpace(CurrentCard.ExampleSentence))
+        {
+            return;
+        }
+
+        IsAnalyzingExample = true;
+        StatusMessage = null;
+
+        try
+        {
+            ExampleAnalysis = await _analysisService.AnalyzeAsync(CurrentCard.ExampleSentence, TargetLanguage.English);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"An error occurred while analyzing the example sentence: {ex.Message}";
+        }
+        finally
+        {
+            IsAnalyzingExample = false;
+        }
     }
 
     [RelayCommand]

@@ -34,10 +34,10 @@
                    TextWrapping="Wrap"
                    IsVisible="{Binding StatusMessage, Converter={x:Static conv:ObjectConverters.IsNotNull}}" />
 
-        <!-- The flashcard itself: click to flip between the German word and its meaning -->
+        <!-- The flashcard itself: click to flip between the German word and its meaning + example sentence -->
         <Button Command="{Binding FlipCardCommand}"
                 IsVisible="{Binding HasCurrentCard}"
-                Width="360" Height="220"
+                Width="380" Height="240"
                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
             <Panel>
                 <TextBlock Text="{Binding CurrentCard.Word}"
@@ -45,17 +45,60 @@
                            FontSize="24" FontWeight="Bold"
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            TextWrapping="Wrap" TextAlignment="Center" />
-                <TextBlock Text="{Binding CurrentCard.Meaning}"
-                           IsVisible="{Binding IsFlipped}"
-                           FontSize="24" FontWeight="Bold"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           TextWrapping="Wrap" TextAlignment="Center" />
+                <StackPanel IsVisible="{Binding IsFlipped}" Spacing="10"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            MaxWidth="320">
+                    <TextBlock Text="{Binding CurrentCard.Meaning}"
+                               FontSize="24" FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               TextWrapping="Wrap" TextAlignment="Center" />
+                    <TextBlock Text="{Binding CurrentCard.ExampleSentence}"
+                               IsVisible="{Binding HasExampleSentence}"
+                               FontSize="14" FontStyle="Italic" Foreground="DarkSlateGray"
+                               HorizontalAlignment="Center"
+                               TextWrapping="Wrap" TextAlignment="Center" />
+                </StackPanel>
             </Panel>
         </Button>
 
         <TextBlock Text="Click the card to flip it"
                    IsVisible="{Binding HasCurrentCard}"
                    HorizontalAlignment="Center" Foreground="Gray" FontSize="12" />
+
+        <!-- 예문이 있고 카드가 뒤집혀 있을 때만, "이 예문 분석해줘" 버튼을 보여준다 -->
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center"
+                    IsVisible="{Binding IsFlipped}">
+            <Button Content="Analyze example" Command="{Binding AnalyzeExampleCommand}"
+                    IsVisible="{Binding HasExampleSentence}"
+                    IsEnabled="{Binding !IsAnalyzingExample}" />
+            <TextBlock Text="Analyzing..." VerticalAlignment="Center" Foreground="Gray"
+                       IsVisible="{Binding IsAnalyzingExample}" />
+        </StackPanel>
+
+        <!-- 분석 버튼을 누르면 나오는 결과: 자연 번역, 직역, 단어별 문법 설명 -->
+        <Border IsVisible="{Binding ExampleAnalysis, Converter={x:Static conv:ObjectConverters.IsNotNull}}"
+                BorderBrush="Gray" BorderThickness="1" Padding="12" MaxWidth="380">
+            <StackPanel Spacing="8">
+                <TextBlock Text="{Binding ExampleAnalysis.Translation}" TextWrapping="Wrap" FontWeight="Bold" />
+                <TextBlock Text="{Binding ExampleAnalysis.LiteralTranslation}" TextWrapping="Wrap"
+                           FontStyle="Italic" Foreground="Gray" />
+                <ItemsControl ItemsSource="{Binding ExampleAnalysis.WordAnalyses}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:WordAnalysis">
+                            <StackPanel Margin="0,4,0,0" Spacing="2">
+                                <TextBlock FontWeight="Bold">
+                                    <Run Text="{Binding Word}" />
+                                    <Run Text=" — " />
+                                    <Run Text="{Binding Meaning}" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding GrammarExplanation}" TextWrapping="Wrap"
+                                           FontSize="12" Foreground="Gray" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
 
         <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center"
                     IsVisible="{Binding IsFlipped}">

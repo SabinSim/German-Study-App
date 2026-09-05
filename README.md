@@ -1,29 +1,46 @@
 # German Study App
 
-A desktop app for learning German that turns saved vocabulary into an Anki-style spaced-repetition trainer, with AI-powered sentence analysis on top. Built with C#/.NET and Avalonia UI, following a clean Core/Infrastructure/UI layered architecture.
+A desktop app for learning German vocabulary with an Anki-style spaced-repetition trainer, AI-generated example sentences, and on-demand AI grammar analysis. Built with C#/.NET and Avalonia UI, following a clean Core/Infrastructure/UI layered architecture.
 
 This is both a personal study tool and a portfolio project. Every line in the `Core` and `Infrastructure` layers was written by hand (no scaffolding, no copy-pasted solutions) as a deliberate way to learn backend/.NET fundamentals from scratch. The UI layer was built with AI assistance to move faster, since the focus of this project is backend/domain logic.
 
 ## Features
 
-**Sentence analysis**
-- Paste any German sentence and get a breakdown of verb forms, separable verbs, article/gender reasoning, and adjective declension, powered by the OpenAI API.
-- Toggle translation between English and Korean, and between natural and literal phrasing.
-- Save unfamiliar words directly to a chosen deck.
+**Decks**
+- Nested decks (e.g. "German" containing "B1", "B2") with create/rename/delete.
+- Click into a deck to open its own detail screen — similar to opening a folder in an IDE — showing only that deck's words.
+- Drag and drop a deck onto another deck to make it a sub-deck, with cycle-prevention (can't drop a deck into its own sub-deck).
 
-**Vocabulary management**
-- Nested decks (e.g. "German" containing "B1", "B2") with create/rename/delete and cycle-prevention.
-- Vocabulary notebook grouped by the date words were added, with deck filtering and live search.
-- Bulk import from a plain `.txt` file (`Word,Meaning` per line), with a preview step before saving.
+**Vocabulary**
+- Add words one at a time from inside a deck (German word + meaning), or bulk import from a plain `.txt` file (`Word,Meaning` per line) with a preview/selection step before saving.
+- Edit a saved word's German text or meaning later to fix typos.
+- Word list grouped by the date added, with live search by word or meaning.
+- When a word is saved, an example sentence in German is generated automatically by the OpenAI API (CEFR level configurable).
 
 **Flashcard review (Leitner system)**
 - 4-level review grading (Again / Hard / Good / Easy) instead of simple right/wrong, closer to real spaced-repetition scheduling.
+- The card back shows the meaning and the AI-generated example sentence.
+- Optional "Analyze example" button runs on-demand AI grammar analysis on that sentence: verb forms, separable verbs, article/gender reasoning, adjective declension, and a natural + literal translation.
 - Leech detection: words that keep getting marked wrong are flagged automatically.
 - Leech-only review mode, card suspension, and undo for the last review answer.
 
 **Study stats**
 - Total words, total leeches, and a box-level distribution chart.
-- Daily count of words saved, plus a 7-day forecast of upcoming review volume.
+- Daily count of words saved, an overdue count, and a 7-day forecast of upcoming review volume.
+
+## Screenshots
+
+| Decks | Bulk import preview |
+|---|---|
+| ![Decks screen](screenshots/01-decks.png) | ![Import preview](screenshots/02-import-preview.png) |
+
+| Word list with auto-generated examples | Flashcard front |
+|---|---|
+| ![Word list](screenshots/03-words-with-examples.png) | ![Flashcard front](screenshots/04-flashcard-front.png) |
+
+| Flashcard back (with grammar analysis) | Study stats |
+|---|---|
+| ![Flashcard back](screenshots/05-flashcard-back.png) | ![Stats](screenshots/06-stats.png) |
 
 ## Architecture
 
@@ -39,6 +56,8 @@ GermanStudyApp.ConsoleTest     → console harness for manually smoke-testing Co
 
 Core defines contracts such as `IGermanAnalysisService`, `IVocabRepository`, `IDeckRepository`, `IFlashcardService`, and `IVocabImportService`. Infrastructure provides the concrete implementations (`OpenAiAnalysisService`, `VocabRepository`/`DeckRepository` via EF Core/SQLite, `LeitnerFlashcardService`, `TxtVocabImportService`). The UI depends only on these interfaces, so the analysis engine, storage, or spaced-repetition logic can each be swapped or unit tested independently.
 
+`IGermanAnalysisService` has two responsibilities: generating a German example sentence for a word at a given CEFR level (`GenerateExampleSentenceAsync`, called automatically by `VocabRepository.SaveAsync` when a word is saved), and analyzing a German sentence's grammar on demand (`AnalyzeAsync`, called when the user taps "Analyze example" on the flashcard back).
+
 ## Tech stack
 
 - C# / .NET 10
@@ -53,7 +72,7 @@ Core defines contracts such as `IGermanAnalysisService`, `IVocabRepository`, `ID
 
 **Prerequisites**
 - .NET 10 SDK or later
-- An OpenAI API key (only needed for sentence analysis)
+- An OpenAI API key (needed for example-sentence generation and grammar analysis)
 
 **Setup**
 
@@ -83,9 +102,7 @@ dotnet publish GermanStudyApp.UI -c Release -r osx-arm64 --self-contained true -
 
 ## Project status
 
-Actively in development. Core features (sentence analysis, deck management, vocabulary notebook, flashcard review, study stats, bulk import) are implemented and working end to end, backed by a CI pipeline and a growing unit test suite.
-
-Next up: reworking sentence analysis so AI generates example sentences from saved vocabulary at a chosen difficulty level, then analyzes those generated sentences, rather than requiring manual sentence input.
+Actively in development. Core features (deck management with drag-and-drop hierarchy, vocabulary add/edit/import, AI-generated example sentences, on-demand grammar analysis, flashcard review, study stats) are implemented and working end to end, backed by a CI pipeline and a growing unit test suite.
 
 ## License
 
