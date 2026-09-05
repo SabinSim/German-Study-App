@@ -42,10 +42,14 @@
         <ListBox Grid.Row="2" ItemsSource="{Binding DisplayDecks}">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="vm:DeckDisplayItem">
-                    <Grid ColumnDefinitions="*,Auto,Auto">
-                        <TextBlock Grid.Column="0" Text="{Binding IndentedName}"
-                                   FontFamily="Consolas,Menlo,monospace" FontSize="14"
-                                   VerticalAlignment="Center" />
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                        <Button Grid.Column="0" Content="{Binding IndentedName}"
+                                Command="{Binding $parent[UserControl].((vm:DeckViewModel)DataContext).OpenDeckCommand}"
+                                CommandParameter="{Binding Source}"
+                                FontFamily="Consolas,Menlo,monospace" FontSize="14"
+                                HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+                                Background="Transparent" BorderThickness="0" Padding="0"
+                                VerticalAlignment="Center" />
                         <Button Grid.Column="1" Content="Edit"
                                 Click="OnEditDeckClick"
                                 CommandParameter="{Binding Source}"

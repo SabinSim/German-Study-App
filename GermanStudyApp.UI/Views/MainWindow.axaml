@@ -9,22 +9,18 @@
 
     <TabControl>
         <TabItem Header="Decks">
-            <views:DeckView DataContext="{Binding DeckVM}" />
-        </TabItem>
-        <TabItem Header="Sentence Analysis">
-            <views:AnalysisView DataContext="{Binding AnalysisVM}" />
-        </TabItem>
-        <TabItem Header="Vocabulary">
-            <views:VocabNotebookView DataContext="{Binding VocabVM}" />
+            <Panel>
+                <views:DeckView DataContext="{Binding DeckVM}" IsVisible="{Binding !IsViewingDeckDetail}" />
+                <views:DeckDetailView x:Name="DeckDetailViewControl"
+                                      DataContext="{Binding DeckDetailVM}"
+                                      IsVisible="{Binding IsViewingDeckDetail}" />
+            </Panel>
         </TabItem>
         <TabItem Header="Flashcards">
             <views:FlashcardView DataContext="{Binding FlashcardVM}" />
         </TabItem>
         <TabItem Header="Stats">
             <views:StatsView DataContext="{Binding StatsVM}" />
-        </TabItem>
-        <TabItem Header="Import">
-            <views:ImportView DataContext="{Binding ImportVM}" />
         </TabItem>
     </TabControl>
 

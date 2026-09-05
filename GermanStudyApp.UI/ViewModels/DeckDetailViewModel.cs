@@ -10,10 +10,15 @@ using GermanStudyApp.Infrastructure;
 
 namespace GermanStudyApp.UI.ViewModels;
 
-public partial class VocabNotebookViewModel : ObservableObject
+// 덱 하나를 열었을 때 보여주는 화면의 ViewModel.
+// 그 덱 안의 단어 목록, 단어 직접 추가, txt 파일 일괄 임포트를 한 곳에서 다룬다.
+public partial class DeckDetailViewModel : ObservableObject
 {
     private readonly IVocabRepository _vocabRepository;
-    private readonly IDeckRepository _deckRepository;
+    private readonly IVocabImportService _importService;
+
+    [ObservableProperty]
+    private Deck? _deck;
 
     [ObservableProperty]
     private bool _isBusy;
@@ -24,19 +29,13 @@ public partial class VocabNotebookViewModel : ObservableObject
     [ObservableProperty]
     private string? _successMessage;
 
-    // 필터 드롭다운용 덱 목록. 선택된 게 없으면(null) 전체를 보여준다.
-    public ObservableCollection<Deck> AvailableDecks { get; } = new();
-
-    [ObservableProperty]
-    private Deck? _selectedDeckFilter;
-
     // 단어 이름/뜻으로 검색하는 검색창용 텍스트.
     [ObservableProperty]
     private string _searchText = string.Empty;
 
     public ObservableCollection<VocabDateGroup> GroupedEntries { get; } = new();
 
-    // "단어 추가" 폼에서 쓰는 입력값들. 저장할 덱을 고르는 드롭다운은 AvailableDecks를 그대로 재사용한다.
+    // "단어 추가" 폼 입력값.
     [ObservableProperty]
     private string _newWord = string.Empty;
 
@@ -44,36 +43,29 @@ public partial class VocabNotebookViewModel : ObservableObject
     private string _newMeaning = string.Empty;
 
     [ObservableProperty]
-    private Deck? _newWordDeck;
-
-    [ObservableProperty]
     private bool _isSavingNewWord;
 
-    public VocabNotebookViewModel()
+    // txt 임포트 미리보기 목록.
+    public ObservableCollection<ImportEntryItem> PreviewEntries { get; } = new();
+
+    public bool HasPreview => PreviewEntries.Count > 0;
+
+    public DeckDetailViewModel()
     {
         _vocabRepository = new VocabRepository(AnalysisServiceFactory.Create());
-        _deckRepository = new DeckRepository();
+        _importService = new TxtVocabImportService();
     }
 
-    [RelayCommand]
-    private async Task LoadDecksAsync()
+    // 덱 목록 화면에서 어떤 덱을 열지 알려줄 때 호출한다.
+    public void SetDeck(Deck deck)
     {
-        var decks = await _deckRepository.GetAllAsync();
-
-        AvailableDecks.Clear();
-        foreach (var deck in decks.OrderBy(d => d.Name))
-        {
-            AvailableDecks.Add(deck);
-        }
+        Deck = deck;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        PreviewEntries.Clear();
+        OnPropertyChanged(nameof(HasPreview));
     }
 
-    // 필터 드롭다운에서 다른 덱을 고르면, 목록을 자동으로 다시 불러온다.
-    partial void OnSelectedDeckFilterChanged(Deck? value)
-    {
-        _ = LoadAsync();
-    }
-
-    // 검색창에 글자를 입력할 때마다, 목록을 자동으로 다시 불러온다.
     partial void OnSearchTextChanged(string value)
     {
         _ = LoadAsync();
@@ -82,17 +74,19 @@ public partial class VocabNotebookViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadAsync()
     {
+        if (Deck is null)
+        {
+            return;
+        }
+
         IsBusy = true;
         ErrorMessage = null;
-        SuccessMessage = null;
 
         try
         {
             var all = await _vocabRepository.GetAllAsync();
 
-            var filtered = SelectedDeckFilter is null
-                ? all
-                : all.Where(e => e.DeckId == SelectedDeckFilter.Id).ToList();
+            var filtered = all.Where(e => e.DeckId == Deck.Id).ToList();
 
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
@@ -104,8 +98,6 @@ public partial class VocabNotebookViewModel : ObservableObject
 
             GroupedEntries.Clear();
 
-            // DateAdded의 "날짜" 부분(시간은 무시)으로 묶고,
-            // 최근 날짜가 위로 오도록 내림차순 정렬한다.
             var groups = filtered
                 .GroupBy(e => e.DateAdded.Date)
                 .OrderByDescending(g => g.Key)
@@ -120,7 +112,7 @@ public partial class VocabNotebookViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"An error occurred while loading your vocabulary: {ex.Message}";
+            ErrorMessage = $"An error occurred while loading this deck's words: {ex.Message}";
         }
         finally
         {
@@ -134,15 +126,14 @@ public partial class VocabNotebookViewModel : ObservableObject
         ErrorMessage = null;
         SuccessMessage = null;
 
-        if (string.IsNullOrWhiteSpace(NewWord) || string.IsNullOrWhiteSpace(NewMeaning))
+        if (Deck is null)
         {
-            ErrorMessage = "Please enter both a word and a meaning.";
             return;
         }
 
-        if (NewWordDeck is null)
+        if (string.IsNullOrWhiteSpace(NewWord) || string.IsNullOrWhiteSpace(NewMeaning))
         {
-            ErrorMessage = "Please choose a deck.";
+            ErrorMessage = "Please enter both a word and a meaning.";
             return;
         }
 
@@ -154,7 +145,7 @@ public partial class VocabNotebookViewModel : ObservableObject
             {
                 Word = NewWord.Trim(),
                 Meaning = NewMeaning.Trim(),
-                DeckId = NewWordDeck.Id,
+                DeckId = Deck.Id,
                 DateAdded = DateTime.Now,
                 NextReviewDate = DateTime.Now,
                 BoxLevel = 1,
@@ -213,20 +204,72 @@ public partial class VocabNotebookViewModel : ObservableObject
         }
     }
 
-    public async Task DeleteAllAsync()
+    // 파일을 실제로 여는 건 코드 비하인드(View)에서 하고, 읽어온 텍스트만 여기로 넘겨받는다.
+    public void LoadPreviewFromText(string fileContent)
     {
+        if (Deck is null)
+        {
+            return;
+        }
+
         ErrorMessage = null;
-        SuccessMessage = null;
+        PreviewEntries.Clear();
 
         try
         {
-            await _vocabRepository.DeleteAllAsync();
-            SuccessMessage = "All words deleted successfully.";
+            var parsed = _importService.ParseTxt(fileContent, Deck.Id);
+
+            foreach (var entry in parsed)
+            {
+                PreviewEntries.Add(new ImportEntryItem(entry));
+            }
+
+            OnPropertyChanged(nameof(HasPreview));
+
+            if (PreviewEntries.Count == 0)
+            {
+                ErrorMessage = "No words found in that file.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Couldn't read that file. Make sure each line looks like 'Word,Meaning'. ({ex.Message})";
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveImportedAsync()
+    {
+        var selected = PreviewEntries.Where(item => item.IsSelected).ToList();
+
+        if (selected.Count == 0)
+        {
+            ErrorMessage = "Please check at least one word to save.";
+            return;
+        }
+
+        IsBusy = true;
+        ErrorMessage = null;
+
+        try
+        {
+            foreach (var item in selected)
+            {
+                await _vocabRepository.SaveAsync(item.Entry);
+            }
+
+            SuccessMessage = $"Saved {selected.Count} word(s).";
+            PreviewEntries.Clear();
+            OnPropertyChanged(nameof(HasPreview));
             await LoadAsync();
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"An error occurred while deleting all words: {ex.Message}";
+            ErrorMessage = $"An error occurred while saving: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 }

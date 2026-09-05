@@ -15,6 +15,9 @@ public partial class DeckViewModel : ObservableObject
 {
     private readonly IDeckRepository _deckRepository;
 
+    // 덱 카드를 클릭했을 때, 부모(MainWindow)에게 "이 덱을 열어줘"라고 알려주는 이벤트.
+    public event EventHandler<Deck>? DeckOpened;
+
     [ObservableProperty]
     private string _newDeckName = string.Empty;
 
@@ -123,6 +126,12 @@ public partial class DeckViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private void OpenDeck(Deck deck)
+    {
+        DeckOpened?.Invoke(this, deck);
     }
 
     [RelayCommand]
