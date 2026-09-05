@@ -61,7 +61,7 @@ public partial class FlashcardViewModel : ObservableObject
 
     public FlashcardViewModel()
     {
-        _vocabRepository = new VocabRepository();
+        _vocabRepository = new VocabRepository(AnalysisServiceFactory.Create());
         _deckRepository = new DeckRepository();
         _flashcardService = new LeitnerFlashcardService();
     }

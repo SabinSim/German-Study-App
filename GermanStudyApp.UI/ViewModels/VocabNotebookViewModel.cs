@@ -38,7 +38,7 @@ public partial class VocabNotebookViewModel : ObservableObject
 
     public VocabNotebookViewModel()
     {
-        _vocabRepository = new VocabRepository();
+        _vocabRepository = new VocabRepository(AnalysisServiceFactory.Create());
         _deckRepository = new DeckRepository();
     }
 

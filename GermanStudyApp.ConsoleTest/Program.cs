@@ -45,7 +45,7 @@ foreach (var wordAnalysis in result.WordAnalyses)
     Console.WriteLine($"GrammarExplanation: {wordAnalysis.GrammarExplanation}");
 }
 
-var repository = new VocabRepository();
+var repository = new VocabRepository(service);
 
 var entry = new VocabEntry
 {

@@ -39,7 +39,7 @@ public partial class StatsViewModel : ObservableObject
 
     public StatsViewModel()
     {
-        _vocabRepository = new VocabRepository();
+        _vocabRepository = new VocabRepository(AnalysisServiceFactory.Create());
     }
 
     [RelayCommand]

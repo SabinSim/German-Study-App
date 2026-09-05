@@ -60,17 +60,8 @@ public partial class AnalysisViewModel : ObservableObject
 
     public AnalysisViewModel()
     {
-        // 콘솔 테스트 때와 똑같이, 환경 변수에서 API 키를 읽어온다.
-        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-        
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            // API 키가 없으면 임시로 더미 값을 사용하고, 실제 분석 시 에러 메시지를 표시
-            apiKey = "DUMMY_KEY_NOT_SET";
-        }
-        
-        _analysisService = new OpenAiAnalysisService(new HttpClient(), apiKey);
-        _vocabRepository = new VocabRepository();
+        _analysisService = AnalysisServiceFactory.Create();
+        _vocabRepository = new VocabRepository(AnalysisServiceFactory.Create());
         _deckRepository = new DeckRepository();
     }
 

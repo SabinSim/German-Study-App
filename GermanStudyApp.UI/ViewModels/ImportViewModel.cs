@@ -34,7 +34,7 @@ public partial class ImportViewModel : ObservableObject
     public ImportViewModel()
     {
         _importService = new TxtVocabImportService();
-        _vocabRepository = new VocabRepository();
+        _vocabRepository = new VocabRepository(AnalysisServiceFactory.Create());
         _deckRepository = new DeckRepository();
     }
 

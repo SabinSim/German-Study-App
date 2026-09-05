@@ -7,10 +7,19 @@ namespace GermanStudyApp.Infrastructure;
 
 public class VocabRepository : IVocabRepository
 {
+
+    private readonly IGermanAnalysisService _analysisService;
+    
+    public VocabRepository(IGermanAnalysisService analysisService)
+    {
+        _analysisService = analysisService;
+    }
+    
     public async Task SaveAsync(VocabEntry entry, CancellationToken ct = default)
     {
         using var db = new AppDbContext();
         db.Database.EnsureCreated();
+        entry.ExampleSentence = await _analysisService.GenerateExampleSentenceAsync(entry.Word, GermanLevel.B1, ct);
         db.VocabEntries.Add(entry);
         await db.SaveChangesAsync(ct);
     }
