@@ -67,6 +67,14 @@ public partial class DeckDetailView : UserControl
         vm.LoadPreviewFromText(content);
     }
 
+    private void OnEditWordClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.CommandParameter is VocabEntry entry && DataContext is DeckDetailViewModel vm)
+        {
+            vm.StartEditWordCommand.Execute(entry);
+        }
+    }
+
     private async void OnDeleteWordClick(object? sender, RoutedEventArgs e)
     {
         if (sender is Button button && button.CommandParameter is VocabEntry entry)

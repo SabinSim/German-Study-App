@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:GermanStudyApp.UI.ViewModels"
         xmlns:views="using:GermanStudyApp.UI.Views"
+        xmlns:conv="using:Avalonia.Data.Converters"
         x:Class="GermanStudyApp.UI.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="German Study App"
@@ -10,10 +11,11 @@
     <TabControl>
         <TabItem Header="Decks">
             <Panel>
-                <views:DeckView DataContext="{Binding DeckVM}" IsVisible="{Binding !IsViewingDeckDetail}" />
+                <views:DeckView DataContext="{Binding DeckVM}"
+                                IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsViewingDeckDetail, Converter={x:Static conv:BoolConverters.Not}}" />
                 <views:DeckDetailView x:Name="DeckDetailViewControl"
                                       DataContext="{Binding DeckDetailVM}"
-                                      IsVisible="{Binding IsViewingDeckDetail}" />
+                                      IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsViewingDeckDetail}" />
             </Panel>
         </TabItem>
         <TabItem Header="Flashcards">

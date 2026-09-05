@@ -14,6 +14,11 @@ public class TxtVocabImportService : IVocabImportService
         {
             var parts = line.Split(',');
 
+            if (string.IsNullOrWhiteSpace(line) || parts.Length < 2)
+            {
+                continue;
+            }
+
             var entry = new VocabEntry()
             {
                 Word = parts[0].Trim(),

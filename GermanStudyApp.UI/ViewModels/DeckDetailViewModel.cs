@@ -35,7 +35,8 @@ public partial class DeckDetailViewModel : ObservableObject
 
     public ObservableCollection<VocabDateGroup> GroupedEntries { get; } = new();
 
-    // "단어 추가" 폼 입력값.
+    // "단어 추가" 폼 입력값. EditingEntry가 null이 아니면, 새로 만드는 게 아니라
+    // 그 단어를 고치는 중이라는 뜻이다 (Deck 화면의 EditingDeck 패턴과 동일).
     [ObservableProperty]
     private string _newWord = string.Empty;
 
@@ -44,6 +45,14 @@ public partial class DeckDetailViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isSavingNewWord;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEditingWord))]
+    [NotifyPropertyChangedFor(nameof(WordFormButtonText))]
+    private VocabEntry? _editingEntry;
+
+    public bool IsEditingWord => EditingEntry is not null;
+    public string WordFormButtonText => IsEditingWord ? "Save changes" : "Add word";
 
     // txt 임포트 미리보기 목록.
     public ObservableCollection<ImportEntryItem> PreviewEntries { get; } = new();
@@ -141,23 +150,37 @@ public partial class DeckDetailViewModel : ObservableObject
 
         try
         {
-            var entry = new VocabEntry
+            if (EditingEntry is not null)
             {
-                Word = NewWord.Trim(),
-                Meaning = NewMeaning.Trim(),
-                DeckId = Deck.Id,
-                DateAdded = DateTime.Now,
-                NextReviewDate = DateTime.Now,
-                BoxLevel = 1,
-            };
+                // 수정 모드: 기존 단어의 Word/Meaning만 바꾸고, 예문/박스 레벨 등은 그대로 둔다.
+                EditingEntry.Word = NewWord.Trim();
+                EditingEntry.Meaning = NewMeaning.Trim();
+                await _vocabRepository.UpdateAsync(EditingEntry);
 
-            // 예문 생성은 VocabRepository.SaveAsync 안에서 자동으로 처리된다.
-            await _vocabRepository.SaveAsync(entry);
+                SuccessMessage = $"Updated '{EditingEntry.Word}'.";
+                EditingEntry = null;
+            }
+            else
+            {
+                var entry = new VocabEntry
+                {
+                    Word = NewWord.Trim(),
+                    Meaning = NewMeaning.Trim(),
+                    DeckId = Deck.Id,
+                    DateAdded = DateTime.Now,
+                    NextReviewDate = DateTime.Now,
+                    BoxLevel = 1,
+                };
+
+                // 예문 생성은 VocabRepository.SaveAsync 안에서 자동으로 처리된다.
+                await _vocabRepository.SaveAsync(entry);
+
+                SuccessMessage = $"Saved '{entry.Word}'.";
+            }
 
             NewWord = string.Empty;
             NewMeaning = string.Empty;
 
-            SuccessMessage = $"Saved '{entry.Word}'.";
             await LoadAsync();
         }
         catch (Exception ex)
@@ -168,6 +191,24 @@ public partial class DeckDetailViewModel : ObservableObject
         {
             IsSavingNewWord = false;
         }
+    }
+
+    [RelayCommand]
+    private void StartEditWord(VocabEntry entry)
+    {
+        EditingEntry = entry;
+        NewWord = entry.Word;
+        NewMeaning = entry.Meaning;
+        ErrorMessage = null;
+        SuccessMessage = null;
+    }
+
+    [RelayCommand]
+    private void CancelEditWord()
+    {
+        EditingEntry = null;
+        NewWord = string.Empty;
+        NewMeaning = string.Empty;
     }
 
     public async Task DeleteWordAsync(VocabEntry entry)

@@ -1,7 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:GermanStudyApp.UI.ViewModels"
-             xmlns:models="using:GermanStudyApp.Core.Models"
              xmlns:conv="using:Avalonia.Data.Converters"
              x:Class="GermanStudyApp.UI.Views.DeckView"
              x:DataType="vm:DeckViewModel">
@@ -11,22 +10,14 @@
         <TextBlock Grid.Row="0" Text="Decks" FontSize="22" FontWeight="Bold" Margin="0,0,0,12" />
 
         <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,16" MaxWidth="420" HorizontalAlignment="Left">
-            <TextBlock Text="Editing deck (choose a new name/parent below)"
+            <TextBlock Text="Editing deck (rename below - drag it onto another deck to move it)"
                        FontStyle="Italic"
                        IsVisible="{Binding IsEditing}" />
 
             <TextBox Watermark="New deck name" Text="{Binding NewDeckName}" />
 
-            <ComboBox ItemsSource="{Binding ParentOptions}"
-                      SelectedItem="{Binding SelectedParentDeck}"
-                      PlaceholderText="Parent deck (optional)"
-                      HorizontalAlignment="Stretch">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="models:Deck">
-                        <TextBlock Text="{Binding Name}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
+            <TextBlock Text="Tip: drag a deck onto another deck below to make it a sub-deck."
+                       FontSize="12" Foreground="Gray" IsVisible="{Binding !IsEditing}" />
 
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Content="{Binding SaveButtonText}" Command="{Binding SaveDeckCommand}" />
@@ -42,24 +33,31 @@
         <ListBox Grid.Row="2" ItemsSource="{Binding DisplayDecks}">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="vm:DeckDisplayItem">
-                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                        <Button Grid.Column="0" Content="{Binding IndentedName}"
-                                Command="{Binding $parent[UserControl].((vm:DeckViewModel)DataContext).OpenDeckCommand}"
-                                CommandParameter="{Binding Source}"
-                                FontFamily="Consolas,Menlo,monospace" FontSize="14"
-                                HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-                                Background="Transparent" BorderThickness="0" Padding="0"
-                                VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Content="Edit"
-                                Click="OnEditDeckClick"
-                                CommandParameter="{Binding Source}"
-                                FontSize="12" Padding="8,4" Margin="0,0,4,0" />
-                        <Button Grid.Column="2" Content="Delete"
-                                Click="OnDeleteDeckClick"
-                                CommandParameter="{Binding Source}"
-                                FontSize="12" Padding="8,4"
-                                Foreground="IndianRed" />
-                    </Grid>
+                    <!-- 드래그 소스이자 드롭 타겟. 라이더에서 파일을 다른 폴더로 끄는 것과 같은 느낌:
+                         이 덱을 눌러서 끌면 드래그가 시작되고, 다른 덱 행 위에 놓으면 그 덱의 하위 덱이 된다. -->
+                    <Border Background="Transparent"
+                            PointerPressed="OnDeckRowPointerPressed"
+                            AttachedToVisualTree="OnDeckRowAttached"
+                            DragDrop.AllowDrop="True">
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                            <Button Grid.Column="0" Content="{Binding IndentedName}"
+                                    Command="{Binding $parent[UserControl].((vm:DeckViewModel)DataContext).OpenDeckCommand}"
+                                    CommandParameter="{Binding Source}"
+                                    FontFamily="Consolas,Menlo,monospace" FontSize="14"
+                                    HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+                                    Background="Transparent" BorderThickness="0" Padding="0"
+                                    VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Content="Edit"
+                                    Click="OnEditDeckClick"
+                                    CommandParameter="{Binding Source}"
+                                    FontSize="12" Padding="8,4" Margin="0,0,4,0" />
+                            <Button Grid.Column="2" Content="Delete"
+                                    Click="OnDeleteDeckClick"
+                                    CommandParameter="{Binding Source}"
+                                    FontSize="12" Padding="8,4"
+                                    Foreground="IndianRed" />
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

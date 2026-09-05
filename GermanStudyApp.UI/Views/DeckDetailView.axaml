@@ -21,20 +21,18 @@
             <TextBlock Text="Loading..." IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
         </StackPanel>
 
-        <!-- 단어 직접 추가 폼: 예문은 저장 시 자동으로 생성된다 -->
+        <!-- 한 줄에: 단어 입력, 뜻 입력, 검색, 추가 버튼, 임포트 버튼. 예문은 새로 저장할 때만 자동으로 생성된다 -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
-            <TextBox Text="{Binding NewWord}" Watermark="German word" Width="160" />
-            <TextBox Text="{Binding NewMeaning}" Watermark="Meaning" Width="160" />
-            <Button Content="Add word" Command="{Binding AddWordCommand}" IsEnabled="{Binding !IsSavingNewWord}" />
-            <TextBlock Text="Generating example..." VerticalAlignment="Center" Foreground="Gray"
-                       IsVisible="{Binding IsSavingNewWord}" />
+            <TextBox Text="{Binding NewWord}" Watermark="German word" Width="140" />
+            <TextBox Text="{Binding NewMeaning}" Watermark="Meaning" Width="140" />
+            <TextBox Text="{Binding SearchText}" Watermark="Search word or meaning..." Width="180" />
+            <Button Content="{Binding WordFormButtonText}" Command="{Binding AddWordCommand}" IsEnabled="{Binding !IsSavingNewWord}" />
+            <Button Content="Import from .txt file..." Click="OnChooseFileClick" />
+            <Button Content="Cancel" Command="{Binding CancelEditWordCommand}" IsVisible="{Binding IsEditingWord}" />
         </StackPanel>
 
-        <!-- txt 파일 일괄 임포트 -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
-            <Button Content="Import from .txt file..." Click="OnChooseFileClick" />
-            <TextBox Text="{Binding SearchText}" Watermark="Search word or meaning..." Width="200" />
-        </StackPanel>
+        <TextBlock Grid.Row="2" Text="Generating example..." Foreground="Gray"
+                   IsVisible="{Binding IsSavingNewWord}" />
 
         <TextBlock Grid.Row="3" Text="{Binding ErrorMessage}"
                    Foreground="IndianRed" Margin="0,8,0,0"
@@ -76,7 +74,7 @@
                                     <DataTemplate x:DataType="models:VocabEntry">
                                         <Border BorderBrush="Gray" BorderThickness="0,0,0,1" Padding="0,8"
                                                 Opacity="{Binding IsSuspended, Converter={StaticResource SuspendedOpacityConverter}}">
-                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                                                 <StackPanel Grid.Column="0" Spacing="2">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Text="{Binding Word}" FontWeight="Bold" FontSize="15" />
@@ -97,6 +95,14 @@
                                                 <TextBlock Grid.Column="1" Text="{Binding BoxLevel, StringFormat='Box {0}'}"
                                                            VerticalAlignment="Center" Margin="0,0,12,0" />
                                                 <Button Grid.Column="2"
+                                                        Content="Edit"
+                                                        Click="OnEditWordClick"
+                                                        CommandParameter="{Binding}"
+                                                        FontSize="12"
+                                                        Padding="8,4"
+                                                        Margin="0,0,6,0"
+                                                        VerticalAlignment="Center" />
+                                                <Button Grid.Column="3"
                                                         Content="{Binding IsSuspended, Converter={StaticResource SuspendButtonTextConverter}}"
                                                         Click="OnToggleSuspendClick"
                                                         CommandParameter="{Binding}"
@@ -104,7 +110,7 @@
                                                         Padding="8,4"
                                                         Margin="0,0,6,0"
                                                         VerticalAlignment="Center" />
-                                                <Button Grid.Column="3"
+                                                <Button Grid.Column="4"
                                                         Content="Delete"
                                                         Click="OnDeleteWordClick"
                                                         CommandParameter="{Binding}"

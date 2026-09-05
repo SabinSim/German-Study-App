@@ -22,9 +22,6 @@ public partial class DeckViewModel : ObservableObject
     private string _newDeckName = string.Empty;
 
     [ObservableProperty]
-    private Deck? _selectedParentDeck;
-
-    [ObservableProperty]
     private bool _isBusy;
 
     [ObservableProperty]
@@ -39,11 +36,8 @@ public partial class DeckViewModel : ObservableObject
     public bool IsEditing => EditingDeck is not null;
     public string SaveButtonText => IsEditing ? "Save Changes" : "Create Deck";
 
-    // 부모 덱 선택용 드롭다운에 쓸, 덱 전체의 납작한(flat) 목록.
+    // 순환 참조 방지 계산(GetDescendantIds)에 쓰는, 덱 전체의 납작한(flat) 목록.
     public ObservableCollection<Deck> AllDecks { get; } = new();
-
-    // 부모 선택 드롭다운에 실제로 보여줄 목록 (수정 중인 덱 자신과 그 하위 덱은 제외 - 순환 방지).
-    public ObservableCollection<Deck> ParentOptions { get; } = new();
 
     // 화면에 계층 구조로 보여줄, 들여쓰기가 적용된 목록.
     public ObservableCollection<DeckDisplayItem> DisplayDecks { get; } = new();
@@ -69,7 +63,6 @@ public partial class DeckViewModel : ObservableObject
             }
 
             RebuildDisplayList(decks);
-            RefreshParentOptions();
         }
         catch (Exception ex)
         {
@@ -96,23 +89,24 @@ public partial class DeckViewModel : ObservableObject
         {
             if (EditingDeck is not null)
             {
+                // 이름만 바꾼다. 부모를 바꾸고 싶으면 목록에서 드래그해서 옮긴다.
                 EditingDeck.Name = NewDeckName.Trim();
-                EditingDeck.ParentDeckId = SelectedParentDeck?.Id;
                 await _deckRepository.UpdateAsync(EditingDeck);
             }
             else
             {
+                // 새 덱은 항상 최상위로 만들어진다. 다른 덱 밑에 넣고 싶으면
+                // 만든 뒤 목록에서 그 덱 위로 드래그해서 옮기면 된다.
                 var deck = new Deck
                 {
                     Name = NewDeckName.Trim(),
-                    ParentDeckId = SelectedParentDeck?.Id,
+                    ParentDeckId = null,
                 };
 
                 await _deckRepository.SaveAsync(deck);
             }
 
             NewDeckName = string.Empty;
-            SelectedParentDeck = null;
             EditingDeck = null;
             StatusMessage = null;
 
@@ -140,8 +134,6 @@ public partial class DeckViewModel : ObservableObject
         EditingDeck = deck;
         NewDeckName = deck.Name;
         StatusMessage = null;
-        RefreshParentOptions();
-        SelectedParentDeck = ParentOptions.FirstOrDefault(d => d.Id == deck.ParentDeckId);
     }
 
     [RelayCommand]
@@ -149,9 +141,41 @@ public partial class DeckViewModel : ObservableObject
     {
         EditingDeck = null;
         NewDeckName = string.Empty;
-        SelectedParentDeck = null;
         StatusMessage = null;
-        RefreshParentOptions();
+    }
+
+    // 드래그 앤 드롭으로 덱을 다른 덱 위에 놓았을 때 호출된다.
+    // draggedDeck을 targetDeck의 자식으로 옮긴다.
+    public async Task<bool> MoveDeckAsync(Deck draggedDeck, Deck targetDeck)
+    {
+        StatusMessage = null;
+
+        if (draggedDeck.Id == targetDeck.Id)
+        {
+            // 자기 자신 위에 놓은 경우 - 아무 일도 하지 않는다.
+            return false;
+        }
+
+        // targetDeck이 draggedDeck 자신의 자손이면, 원형 구조가 생기므로 막는다.
+        var descendantIds = GetDescendantIds(draggedDeck.Id, AllDecks.ToList());
+        if (descendantIds.Contains(targetDeck.Id))
+        {
+            StatusMessage = "Can't move a deck into one of its own sub-decks.";
+            return false;
+        }
+
+        try
+        {
+            draggedDeck.ParentDeckId = targetDeck.Id;
+            await _deckRepository.UpdateAsync(draggedDeck);
+            await LoadAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to move deck: {ex.Message}";
+            return false;
+        }
     }
 
     public async Task DeleteDeckAsync(Deck deck)
@@ -196,27 +220,6 @@ public partial class DeckViewModel : ObservableObject
         foreach (var child in children)
         {
             AddWithChildren(child, allDecks, indentLevel + 1);
-        }
-    }
-
-    // 부모로 고를 수 있는 덱 목록을 다시 계산한다. 수정 중인 덱 자신과, 그 밑에 있는
-    // 모든 하위 덱은 목록에서 뺀다 (자기 자신이나 자기 자손을 부모로 고르면 원형 구조가 생기니까).
-    private void RefreshParentOptions()
-    {
-        ParentOptions.Clear();
-
-        var excludedIds = EditingDeck is null
-            ? new HashSet<int>()
-            : GetDescendantIds(EditingDeck.Id, AllDecks.ToList());
-
-        if (EditingDeck is not null)
-        {
-            excludedIds.Add(EditingDeck.Id);
-        }
-
-        foreach (var deck in AllDecks.Where(d => !excludedIds.Contains(d.Id)))
-        {
-            ParentOptions.Add(deck);
         }
     }
 
