@@ -6,6 +6,7 @@
              x:Class="GermanStudyApp.UI.Views.FlashcardView"
              x:DataType="vm:FlashcardViewModel">
 
+    <ScrollViewer>
     <StackPanel Margin="16" Spacing="16" HorizontalAlignment="Center">
 
         <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
@@ -109,4 +110,5 @@
         </StackPanel>
 
     </StackPanel>
+    </ScrollViewer>
 </UserControl>

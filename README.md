@@ -38,9 +38,13 @@ This is both a personal study tool and a portfolio project. Every line in the `C
 |---|---|
 | ![Word list](screenshots/03-words-with-examples.png) | ![Flashcard front](screenshots/04-flashcard-front.png) |
 
-| Flashcard back (with grammar analysis) | Study stats |
+| Flashcard back | Grammar analysis result |
 |---|---|
-| ![Flashcard back](screenshots/05-flashcard-back.png) | ![Stats](screenshots/06-stats.png) |
+| ![Flashcard back](screenshots/05-flashcard-back.png) | ![Grammar analysis](screenshots/06-grammar-analysis.png) |
+
+| Study stats |
+|---|
+| ![Stats](screenshots/07-stats.png) |
 
 ## Architecture
 
